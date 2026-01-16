@@ -57,10 +57,10 @@ const OPTIONS = {
 };
 
 const VIEWS = [
-  { key: "front", title: "Chính diện", suffix: "Góc chính diện, ngang tầm mắt, full tank shot.", isHero: true },
-  { key: "left", title: "Trái", suffix: "Góc trái, vẫn full tank shot, giữ nguyên mọi thứ như ảnh reference.", isHero: false },
-  { key: "low", title: "Dưới", suffix: "Góc thấp từ dưới nhìn lên, vẫn full tank shot, giữ nguyên như reference.", isHero: false },
-  { key: "top", title: "Trên", suffix: "Góc từ trên xuống nhưng vẫn thấy trọn hồ trong khung (không zoom), giữ nguyên như reference.", isHero: false },
+  { key: "front", title: "Chính diện", suffix: "Chụp chính diện, camera đặt ngang tầm mắt, vuông góc mặt kính trước. Full tank shot.", isHero: true },
+  { key: "left", title: "Trái", suffix: "Chụp từ BÊN TRÁI 45 độ, thấy MẶT KÍNH BÊN TRÁI và chiều sâu, parallax rõ, left side panel visible, left frame edge visible. Full tank shot. Không được giống chính diện.", isHero: false },
+  { key: "low", title: "Dưới", suffix: "Chụp GÓC THẤP từ dưới nhìn lên, thấy viền đáy và trục dọc, perspective mạnh, base frame visible, upward perspective. Full tank shot.", isHero: false },
+  { key: "top", title: "Trên", suffix: "Chụp TOP-DOWN từ trên xuống, thấy layout mặt bằng, thấy khung viền trên, top frame visible, overhead view. Full tank shot. Không được giống chính diện.", isHero: false },
 ];
 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: typeof OPTIONS.shape }) {
@@ -133,7 +133,18 @@ function CheckboxList({ label, values, onToggle, options }: { label: string; val
 
 function PreviewCard({ title, src, loading, onOpen }: { title: string; src: string; loading: boolean; onOpen: (src: string) => void }) {
   return (
-    <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, background: "white", overflow: "hidden", boxShadow: "0 4px 12px rgba(17,24,39,0.05)", height: "100%", display: "flex", flexDirection: "column" }}>
+    <div style={{ 
+      border: "1px solid #e5e7eb", 
+      borderRadius: 12, 
+      background: "white", 
+      overflow: "hidden", 
+      boxShadow: "0 4px 12px rgba(17,24,39,0.05)", 
+      height: "100%", 
+      display: "flex", 
+      flexDirection: "column",
+      maxWidth: "calc((100vh - 24px - 12px) / 2 * 0.75)",
+      margin: "0 auto",
+    }}>
       <div style={{ 
         padding: "6px 10px", 
         fontSize: 12, 
@@ -419,7 +430,14 @@ export default function Page() {
       // STEP 2: Render 3 ảnh còn lại SONG SONG với reference image
       const refViews = VIEWS.filter(v => !v.isHero);
       const refJobs = refViews.map(async (v) => {
-        const refPrompt = `${basePrompt} ${v.suffix} GIỮ NGUYÊN 100% bố cục, cây, lũa, đá như ảnh reference. Chỉ thay góc chụp/camera. Không thêm/bớt chi tiết. portrait 3:4, full tank shot, include entire terrarium, no cropping, no close-up. REQUIRED: portrait orientation 3:4. include entire terrarium. no close-up. no cropping.`;
+        const angleMap: { [key: string]: string } = {
+          left: "LEFT (45 degrees from left side)",
+          low: "LOW (from below looking up)",
+          top: "TOP (overhead top-down view)"
+        };
+        const angleName = angleMap[v.key] || v.key.toUpperCase();
+        
+        const refPrompt = `Use the provided reference image as the exact same terrarium scene. DO NOT change plants/hardscape. ONLY change camera angle to: ${angleName}. NOT front view. ${v.suffix} GIỮ NGUYÊN 100% bố cục, cây, lũa, đá như ảnh reference. Chỉ thay vị trí camera theo góc được chỉ định. Bắt buộc thay đổi perspective. Nếu không thay đổi góc thì coi như sai. portrait 3:4, full tank shot, include entire terrarium, no cropping, no close-up. REQUIRED: portrait orientation 3:4. include entire terrarium. no close-up. no cropping.`;
 
         const res = await fetch("/api/render-terrarium", {
           method: "POST",
@@ -517,7 +535,7 @@ export default function Page() {
           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
       `}</style>
-      <div style={{ height: "100vh", display: "grid", gridTemplateColumns: "340px 1fr", background: "#f6f7fb", overflow: "hidden" }}>
+      <div style={{ height: "100vh", display: "grid", gridTemplateColumns: "clamp(440px, 32vw, 560px) 1fr", background: "#f6f7fb", overflow: "hidden" }}>
       <aside style={{ 
         height: "100vh",
         borderRight: "1px solid #e5e7eb", 
