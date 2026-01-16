@@ -241,7 +241,7 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ title, src, loading, progress
         {title}
       </div>
 
-      {/* KHUNG DỌC 3:4 với object-contain - PORTRAIT THẬT SỰ */}
+      {/* KHUNG DỌC 3:4 với object-contain - PORTRAIT THẬT SỰ - KHÔNG ZOOM */}
       <div
         style={{
           width: "100%",
@@ -259,12 +259,16 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ title, src, loading, progress
         onClick={() => src && !src.startsWith('ERROR:') && onOpen(src)}
         title={src && !src.startsWith('ERROR:') ? "Bấm để xem full" : ""}
       >
+        {/* Container cố định 3:4, không bị ảnh hưởng bởi flex */}
         <div style={{ 
           width: "100%", 
+          maxWidth: "100%",
           aspectRatio: "3 / 4", 
-          height: "auto",
           position: "relative",
           background: "#0b1220",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}>
           {src ? (
             src.startsWith('ERROR:') ? (
@@ -276,11 +280,13 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ title, src, loading, progress
                 src={src}
                 alt={title}
                 style={{ 
-                  width: "100%", 
-                  height: "100%", 
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  width: "auto",
+                  height: "auto",
                   objectFit: "contain",
                   objectPosition: "center",
-                  display: "block" 
+                  display: "block",
                 }}
               />
             )
@@ -374,15 +380,19 @@ function ImageModal({ src, onClose }: { src: string | null; onClose: () => void 
           justifyContent: "center",
           minHeight: 0,
           padding: 20,
+          position: "relative",
         }}>
           <img 
             src={src} 
             alt="full" 
             style={{ 
-              width: "100%", 
-              height: "100%", 
+              maxWidth: "100%",
+              maxHeight: "100%",
+              width: "auto",
+              height: "auto",
               objectFit: "contain",
               objectPosition: "center",
+              display: "block",
             }} 
           />
         </div>
