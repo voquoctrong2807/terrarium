@@ -183,11 +183,15 @@ export default function Page() {
         const data = await res.json();
         if (res.ok && data.imageUrl) {
           setImages((p) => ({ ...p, [v.key]: data.imageUrl }));
+          console.log(`Successfully rendered ${v.key} using model: ${data.model || 'unknown'}`);
         } else {
-          console.error("Render error:", data);
+          console.error(`Render error for ${v.key}:`, data);
+          // Show error in the image slot
+          setImages((p) => ({ ...p, [v.key]: `ERROR: ${data.error || 'Unknown error'}` }));
         }
-      } catch (error) {
-        console.error("Render error:", error);
+      } catch (error: any) {
+        console.error(`Render error for ${v.key}:`, error);
+        setImages((p) => ({ ...p, [v.key]: `ERROR: ${error.message || 'Network error'}` }));
       } finally {
         setLoading((p) => ({ ...p, [v.key]: false }));
       }
@@ -364,7 +368,13 @@ export default function Page() {
               </div>
               <div style={{ height: 260, background: "#f6f7fb", display: "grid", placeItems: "center", position: "relative" }}>
                 {images[v.key as keyof typeof images] ? (
-                  <img src={images[v.key as keyof typeof images]} alt={v.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  images[v.key as keyof typeof images].startsWith('ERROR:') ? (
+                    <div style={{ color: "#dc2626", fontSize: 12, padding: 12, textAlign: "center" }}>
+                      {images[v.key as keyof typeof images]}
+                    </div>
+                  ) : (
+                    <img src={images[v.key as keyof typeof images]} alt={v.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  )
                 ) : (
                   <div style={{ color: "#6b7280", fontSize: 13 }}>Chưa có ảnh</div>
                 )}

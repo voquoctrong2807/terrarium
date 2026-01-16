@@ -14,9 +14,11 @@ app.use(express.json());
 app.post('/api/render-terrarium', async (req, res) => {
   try {
     const { prompt, aspect = "3:4" } = req.body;
+    console.log('Received request:', { prompt: prompt?.substring(0, 100) + '...', aspect });
 
     const apiKey = process.env.GOOGLE_AI_STUDIO_API_KEY;
     if (!apiKey) {
+      console.error('Missing API key');
       return res.status(500).json({
         error: "Missing GOOGLE_AI_STUDIO_API_KEY on server"
       });
@@ -24,27 +26,59 @@ app.post('/api/render-terrarium', async (req, res) => {
 
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    // NOTE: Tên model cần đúng theo model bạn có quyền dùng trong AI Studio.
-    // Bạn yêu cầu "nano banana pro" — hãy đặt đúng string model tương ứng ở tài khoản bạn.
-    const model = genAI.getGenerativeModel({ model: "nano-banana-pro" });
+    // Try multiple possible model names
+    const possibleModels = [
+      "gemini-3-pro-image-preview",
+      "gemini-2.0-flash-exp:generatecontent",
+      "imagen-3.0-generate-001",
+      "nano-banana-pro",
+      "gemini-1.5-pro",
+    ];
 
-    // PSEUDO: phần trả ảnh tùy SDK phiên bản + model image. Nếu SDK bạn trả base64:
-    const result = await model.generateContent([
-      {
-        text: `Tạo 1 ảnh theo mô tả sau. Tỉ lệ ảnh ${aspect}. ${prompt}`,
-      },
-    ]);
+    let result = null;
+    let lastError = null;
+    let usedModel = null;
 
-    // TODO: Map output đúng định dạng từ SDK bạn đang dùng.
-    // Ở đây mình trả placeholder để bạn thay đúng field ảnh (base64/url) theo response thật.
-    // Ví dụ nếu có base64: const imageBase64 = result.response.candidates[0].content.parts.find(p=>p.inlineData)?.inlineData?.data
+    for (const modelName of possibleModels) {
+      try {
+        console.log(`Trying model: ${modelName}`);
+        const model = genAI.getGenerativeModel({ model: modelName });
+        
+        result = await model.generateContent([
+          {
+            text: `Tạo 1 ảnh theo mô tả sau. Tỉ lệ ảnh ${aspect}. ${prompt}`,
+          },
+        ]);
+        
+        usedModel = modelName;
+        console.log(`Success with model: ${modelName}`);
+        break;
+      } catch (err) {
+        console.log(`Model ${modelName} failed:`, err.message);
+        lastError = err;
+        continue;
+      }
+    }
+
+    if (!result) {
+      console.error('All models failed. Last error:', lastError);
+      return res.status(500).json({
+        error: "Failed to generate image with any available model",
+        detail: lastError?.message || String(lastError),
+        triedModels: possibleModels
+      });
+    }
+
+    console.log('Response structure:', JSON.stringify(result.response, null, 2).substring(0, 500));
+
     let imageUrl = null;
 
-    // Try to extract image data from response
+    // Try to extract image data from response - check multiple possible structures
     if (result.response?.candidates?.[0]?.content?.parts) {
       for (const part of result.response.candidates[0].content.parts) {
         if (part.inlineData) {
           imageUrl = `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+          console.log('Found inlineData image');
           break;
         }
         if (part.text) {
@@ -52,25 +86,40 @@ app.post('/api/render-terrarium', async (req, res) => {
           const urlMatch = part.text.match(/https?:\/\/[^\s]+/);
           if (urlMatch) {
             imageUrl = urlMatch[0];
+            console.log('Found URL in text:', urlMatch[0]);
             break;
           }
         }
       }
     }
 
+    // Try alternative response structures
+    if (!imageUrl && result.response?.text) {
+      const urlMatch = result.response.text.match(/https?:\/\/[^\s]+/);
+      if (urlMatch) {
+        imageUrl = urlMatch[0];
+        console.log('Found URL in response.text');
+      }
+    }
+
     if (!imageUrl) {
+      console.error('No image found in response. Full response:', JSON.stringify(result.response, null, 2));
       return res.status(501).json({
         error: "Image output mapping needed for your SDK response format.",
-        debug: JSON.stringify(result.response, null, 2)
+        debug: JSON.stringify(result.response, null, 2).substring(0, 2000),
+        usedModel: usedModel
       });
     }
 
-    return res.json({ imageUrl });
+    console.log('Successfully generated image');
+    return res.json({ imageUrl, model: usedModel });
   } catch (e) {
     console.error('Render error:', e);
+    console.error('Error stack:', e.stack);
     return res.status(500).json({ 
       error: "Render error", 
-      detail: String(e) 
+      detail: String(e),
+      stack: e.stack
     });
   }
 });
