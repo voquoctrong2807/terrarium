@@ -100,11 +100,19 @@ app.post('/api/render-terrarium', async (req, res) => {
     return res.json({ ok: true, imageUrl: dataUrl });
   } catch (e) {
     console.error('Render error:', e);
-    console.error('Error stack:', e.stack);
+    console.error('Error message:', e?.message || String(e));
+    console.error('Error stack:', e?.stack);
+    console.error('Error name:', e?.name);
+    
+    // Extract more useful error info
+    const errorDetail = e?.message || String(e);
+    const errorType = e?.name || 'UnknownError';
+    
     return res.status(500).json({
       ok: false,
       error: "Render error",
-      detail: String(e)
+      detail: errorDetail,
+      type: errorType
     });
   }
 });

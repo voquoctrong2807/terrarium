@@ -63,7 +63,18 @@ const VIEWS = [
   { key: "top", title: "Trên", suffix: "Top-down overhead view, top frame visible, bird's eye view, not front view. Full tank shot.", isHero: false },
 ];
 
-function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: typeof OPTIONS.shape }) {
+function Select({ label, value, onChange, options, customValue, onCustomChange, placeholder }: { 
+  label: string; 
+  value: string; 
+  onChange: (v: string) => void; 
+  options: typeof OPTIONS.shape;
+  customValue?: string;
+  onCustomChange?: (v: string) => void;
+  placeholder?: string;
+}) {
+  const showCustom = value === "custom";
+  const optionsWithCustom = [...options, { value: "custom", label: "Custom" }];
+  
   return (
     <label style={{ display: "grid", gap: 4 }}>
       <div style={{ fontSize: 11, color: "#374151", fontWeight: 600 }}>{label}</div>
@@ -89,22 +100,60 @@ function Select({ label, value, onChange, options }: { label: string; value: str
           e.target.style.boxShadow = "none";
         }}
       >
-        {options.map((o) => (
+        {optionsWithCustom.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>
         ))}
       </select>
+      {showCustom && onCustomChange && (
+        <input
+          type="text"
+          value={customValue || ""}
+          onChange={(e) => onCustomChange(e.target.value)}
+          placeholder={placeholder}
+          style={{
+            padding: "8px 10px",
+            height: "38px",
+            marginTop: 8,
+            borderRadius: 10,
+            border: "1px solid #d1d5db",
+            background: "#ffffff",
+            color: "#111827",
+            fontSize: 13,
+            outline: "none",
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = "#16a34a";
+            e.target.style.boxShadow = "0 0 0 3px rgba(22,163,74,0.15)";
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = "#d1d5db";
+            e.target.style.boxShadow = "none";
+          }}
+        />
+      )}
     </label>
   );
 }
 
-function CheckboxList({ label, values, onToggle, options }: { label: string; values: string[]; onToggle: (v: string) => void; options: typeof OPTIONS.plants }) {
+function CheckboxList({ label, values, onToggle, options, customValue, onCustomChange, placeholder }: { 
+  label: string; 
+  values: string[]; 
+  onToggle: (v: string) => void; 
+  options: typeof OPTIONS.plants;
+  customValue?: string;
+  onCustomChange?: (v: string) => void;
+  placeholder?: string;
+}) {
+  const hasCustom = values.includes("custom");
+  const optionsWithCustom = [...options, { value: "custom", label: "Custom" }];
+  
   return (
     <div style={{ display: "grid", gap: 4 }}>
       <div style={{ fontSize: 11, color: "#374151", fontWeight: 600 }}>{label}</div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-        {options.map((o) => {
+        {optionsWithCustom.map((o) => {
           const checked = values.includes(o.value);
           return (
             <label
@@ -127,11 +176,46 @@ function CheckboxList({ label, values, onToggle, options }: { label: string; val
           );
         })}
       </div>
+      {hasCustom && onCustomChange && (
+        <input
+          type="text"
+          value={customValue || ""}
+          onChange={(e) => onCustomChange(e.target.value)}
+          placeholder={placeholder}
+          style={{
+            padding: "8px 10px",
+            height: "38px",
+            marginTop: 8,
+            borderRadius: 10,
+            border: "1px solid #d1d5db",
+            background: "#ffffff",
+            color: "#111827",
+            fontSize: 13,
+            outline: "none",
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = "#16a34a";
+            e.target.style.boxShadow = "0 0 0 3px rgba(22,163,74,0.15)";
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = "#d1d5db";
+            e.target.style.boxShadow = "none";
+          }}
+        />
+      )}
     </div>
   );
 }
 
-function PreviewCard({ title, src, loading, onOpen }: { title: string; src: string; loading: boolean; onOpen: (src: string) => void }) {
+interface PreviewCardProps {
+  title: string;
+  src: string;
+  loading: boolean;
+  progress?: number;
+  onOpen: (src: string) => void;
+}
+
+const PreviewCard: React.FC<PreviewCardProps> = ({ title, src, loading, progress, onOpen }) => {
   return (
     <div style={{ 
       border: "1px solid #e5e7eb", 
@@ -211,15 +295,42 @@ function PreviewCard({ title, src, loading, onOpen }: { title: string; src: stri
               style={{
                 position: "absolute",
                 inset: 0,
-                background: "rgba(255,255,255,0.7)",
-                display: "grid",
-                placeItems: "center",
-                fontWeight: 800,
-                color: "#111827",
-                fontSize: 12,
+                background: "rgba(255,255,255,0.85)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 12,
+                padding: 20,
               }}
             >
-              Rendering…
+              <div style={{ width: "70%", display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{
+                  flex: 1,
+                  height: 10,
+                  background: "#e5e7eb",
+                  borderRadius: 999,
+                  overflow: "hidden",
+                  position: "relative",
+                }}>
+                  <div style={{
+                    width: `${progress || 0}%`,
+                    height: "100%",
+                    background: "#16a34a",
+                    borderRadius: 999,
+                    transition: "width 0.2s ease",
+                  }} />
+                </div>
+                <div style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "#111827",
+                  minWidth: 40,
+                  textAlign: "right",
+                }}>
+                  {Math.round(progress || 0)}%
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -315,34 +426,111 @@ export default function Page() {
   const [aspect, setAspect] = useState("3:4");
   const [gundamMain, setGundamMain] = useState(false);
 
+  // Custom input states
+  const [shapeCustom, setShapeCustom] = useState("");
+  const [frameCustom, setFrameCustom] = useState("");
+  const [themeCustom, setThemeCustom] = useState("");
+  const [hardscapeCustom, setHardscapeCustom] = useState("");
+  const [lightingCustom, setLightingCustom] = useState("");
+  const [moodCustom, setMoodCustom] = useState("");
+  const [plantsCustom, setPlantsCustom] = useState("");
+
   const [images, setImages] = useState({ front: "", left: "", low: "", top: "" });
   const [loading, setLoading] = useState({ front: false, left: false, low: false, top: false });
+  const [progress, setProgress] = useState({ front: 0, left: 0, low: 0, top: 0 });
   const [activeImg, setActiveImg] = useState<string | null>(null);
+  const [progressIntervals, setProgressIntervals] = useState<{ [key: string]: NodeJS.Timeout }>({});
 
   const labelOf = (group: typeof OPTIONS.shape, v: string) => group.find((x) => x.value === v)?.label ?? v;
 
+  // Get effective values (custom or label)
+  const effectiveShape = shape === "custom" ? (shapeCustom || "") : labelOf(OPTIONS.shape, shape);
+  const effectiveFrame = frame === "custom" ? (frameCustom || "") : labelOf(OPTIONS.frame, frame);
+  const effectiveTheme = theme === "custom" ? (themeCustom || "") : labelOf(OPTIONS.theme, theme);
+  const effectiveHardscape = hardscape === "custom" ? (hardscapeCustom || "") : labelOf(OPTIONS.hardscape, hardscape);
+  const effectiveLighting = lighting === "custom" ? (lightingCustom || "") : labelOf(OPTIONS.lighting, lighting);
+  const effectiveMood = mood === "custom" ? (moodCustom || "") : labelOf(OPTIONS.mood, mood);
+  
+  // Plants: combine checked labels + custom input (comma-separated)
+  const checkedPlantLabels = plants.filter(p => p !== "custom").map((p) => labelOf(OPTIONS.plants, p));
+  const customPlantsList = plantsCustom ? plantsCustom.split(",").map(s => s.trim()).filter(Boolean) : [];
+  const effectivePlants = [...checkedPlantLabels, ...customPlantsList].join(", ");
+
   const basePrompt = useMemo(() => {
-    const plantLabels = plants.map((p) => labelOf(OPTIONS.plants, p)).join(", ");
     const hasGundam = plants.includes("gundam-model");
     const gundamLine = hasGundam
       ? `Mô hình Gundam được đặt như ${gundamMain ? "điểm nhấn chính" : "chi tiết trang trí phụ"}, tỷ lệ hài hòa với cảnh quan, chất liệu mô hình thật, không lấn át thiên nhiên.`
       : "";
 
     return [
-      `Một hồ terrarium ${labelOf(OPTIONS.shape, shape)}, ${labelOf(OPTIONS.frame, frame)}, theo chủ đề ${labelOf(OPTIONS.theme, theme)}.`,
-      `Hardscape chính: ${labelOf(OPTIONS.hardscape, hardscape)}. Bố cục có chiều sâu foreground–midground–background rõ ràng.`,
-      `Thực vật: ${plantLabels}. Mật độ tổng thể khoảng ${density}%.`,
+      effectiveShape ? `Một hồ terrarium ${effectiveShape}, ${effectiveFrame || ""}, theo chủ đề ${effectiveTheme || ""}.` : "",
+      effectiveHardscape ? `Hardscape chính: ${effectiveHardscape}. Bố cục có chiều sâu foreground–midground–background rõ ràng.` : "",
+      effectivePlants ? `Thực vật: ${effectivePlants}. Mật độ tổng thể khoảng ${density}%.` : "",
       gundamLine,
-      `Nền hồ gồm đất, sỏi, đá và rêu tự nhiên. Ánh sáng ${labelOf(OPTIONS.lighting, lighting)}, mood ${labelOf(OPTIONS.mood, mood)}.`,
+      `Nền hồ gồm đất, sỏi, đá và rêu tự nhiên. ${effectiveLighting ? `Ánh sáng ${effectiveLighting}` : ""}${effectiveMood ? `, mood ${effectiveMood}` : ""}.`,
       `Phong cách ảnh: photorealistic, ultra realistic, high detail, texture vật liệu thật, ánh sáng mềm, DOF nông, bố cục gọn gàng, không hoạt hình, không minh họa.`,
       `Cùng một hồ, cùng bố cục, chỉ thay góc chụp.`,
       `Chụp toàn cảnh (wide full view), full tank shot, include entire glass terrarium from top frame to base, centered composition.`,
       `BẮT BUỘC ẢNH DỌC portrait 3:4. Full tank shot: thấy trọn hồ terrarium từ viền trên đến chân đế. Căn giữa. Không cận cảnh. Không crop. Không ảnh ngang.`,
     ].filter(Boolean).join(" ");
-  }, [shape, frame, theme, hardscape, plants, density, lighting, mood, aspect, gundamMain]);
+  }, [effectiveShape, effectiveFrame, effectiveTheme, effectiveHardscape, effectivePlants, density, effectiveLighting, effectiveMood, gundamMain]);
 
   const togglePlant = (v: string) => {
     setPlants((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
+  };
+
+  // Start progress interval for a view
+  const startProgress = (viewKey: string) => {
+    // Clear existing interval if any
+    if (progressIntervals[viewKey]) {
+      clearInterval(progressIntervals[viewKey]);
+    }
+    
+    setProgress((prev) => ({ ...prev, [viewKey]: 0 }));
+    
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        const current = prev[viewKey as keyof typeof prev] || 0;
+        const increment = Math.random() * 3 + 1; // 1-4%
+        const next = Math.min(90, current + increment);
+        return { ...prev, [viewKey]: next };
+      });
+    }, 120);
+    
+    setProgressIntervals((prev) => ({ ...prev, [viewKey]: interval }));
+  };
+
+  // Stop progress and set to 100%
+  const stopProgress = (viewKey: string) => {
+    if (progressIntervals[viewKey]) {
+      clearInterval(progressIntervals[viewKey]);
+      setProgressIntervals((prev) => {
+        const next = { ...prev };
+        delete next[viewKey];
+        return next;
+      });
+    }
+    
+    setProgress((prev) => ({ ...prev, [viewKey]: 100 }));
+    
+    setTimeout(() => {
+      setLoading((prev) => ({ ...prev, [viewKey]: false }));
+    }, 200);
+  };
+
+  // Stop progress on error
+  const stopProgressError = (viewKey: string) => {
+    if (progressIntervals[viewKey]) {
+      clearInterval(progressIntervals[viewKey]);
+      setProgressIntervals((prev) => {
+        const next = { ...prev };
+        delete next[viewKey];
+        return next;
+      });
+    }
+    
+    setLoading((prev) => ({ ...prev, [viewKey]: false }));
+    setProgress((prev) => ({ ...prev, [viewKey]: 0 }));
   };
 
   // Nén ảnh trước khi gửi reference
@@ -386,8 +574,12 @@ export default function Page() {
   }
 
   async function render4() {
-    // Bật loading cùng lúc
+    // Bật loading và start progress cùng lúc
     setLoading({ front: true, left: true, low: true, top: true });
+    startProgress("front");
+    startProgress("left");
+    startProgress("low");
+    startProgress("top");
 
     try {
       // STEP 1: Render HERO (front) trước
@@ -405,6 +597,7 @@ export default function Page() {
       
       // Kiểm tra nếu response là HTML (payload too large)
       if (heroText.trim().startsWith('<!DOCTYPE html') || heroText.trim().startsWith('<html')) {
+        stopProgressError("front");
         throw new Error('Payload too large / Server limit exceeded');
       }
 
@@ -415,12 +608,16 @@ export default function Page() {
       }
 
       if (!heroRes.ok || !heroData?.ok || !heroData?.imageUrl) {
-        throw new Error(`Render HERO failed: ${heroData?.error || 'Unknown error'}`);
+        stopProgressError("front");
+        const errorMsg = heroData?.error || 'Unknown error';
+        const errorDetail = heroData?.detail ? ` - ${heroData.detail}` : '';
+        const errorType = heroData?.type ? ` [${heroData.type}]` : '';
+        throw new Error(`Render HERO failed: ${errorMsg}${errorType}${errorDetail}`);
       }
 
-      // Lưu HERO image
+      // Lưu HERO image và stop progress
       setImages((prev) => ({ ...prev, front: heroData.imageUrl }));
-      setLoading((prev) => ({ ...prev, front: false }));
+      stopProgress("front");
 
       // Nén ảnh HERO trước khi dùng làm reference
       const heroImageUrl = heroData.imageUrl;
@@ -452,6 +649,7 @@ export default function Page() {
         
         // Kiểm tra nếu response là HTML (payload too large)
         if (text.trim().startsWith('<!DOCTYPE html') || text.trim().startsWith('<html')) {
+          stopProgressError(v.key);
           throw new Error('Payload too large / Server limit exceeded');
         }
 
@@ -463,7 +661,11 @@ export default function Page() {
         }
 
         if (!res.ok || !data?.ok || !data?.imageUrl) {
-          throw new Error(`Render ${v.key} failed: ${data?.error || 'Unknown error'}`);
+          stopProgressError(v.key);
+          const errorMsg = data?.error || 'Unknown error';
+          const errorDetail = data?.detail ? ` - ${data.detail}` : '';
+          const errorType = data?.type ? ` [${data.type}]` : '';
+          throw new Error(`Render ${v.key} failed: ${errorMsg}${errorType}${errorDetail}`);
         }
 
         return { key: v.key, url: data.imageUrl };
@@ -475,19 +677,23 @@ export default function Page() {
       refResults.forEach((r, index) => {
         if (r.status === "fulfilled") {
           nextImages[r.value.key] = r.value.url;
+          stopProgress(r.value.key);
         } else {
           console.error(r.reason);
           const key = refViews[index].key;
           nextImages[key] = `ERROR: ${r.reason?.message || 'Unknown error'}`;
+          stopProgressError(key);
         }
       });
 
       setImages((prev) => ({ ...prev, ...nextImages }));
-      setLoading({ front: false, left: false, low: false, top: false });
     } catch (error: any) {
       console.error("Render error:", error);
       setImages((prev) => ({ ...prev, front: `ERROR: ${error.message || 'Unknown error'}` }));
-      setLoading({ front: false, left: false, low: false, top: false });
+      stopProgressError("front");
+      stopProgressError("left");
+      stopProgressError("low");
+      stopProgressError("top");
     }
   }
 
@@ -566,15 +772,55 @@ export default function Page() {
           paddingRight: "10px",
         }}>
           <div style={{ display: "grid", gap: 10 }}>
-            <Select label="Hình dáng hồ" value={shape} onChange={setShape} options={OPTIONS.shape} />
+            <Select 
+              label="Hình dáng hồ" 
+              value={shape} 
+              onChange={setShape} 
+              options={OPTIONS.shape}
+              customValue={shapeCustom}
+              onCustomChange={setShapeCustom}
+              placeholder="VD: hồ lục giác, hồ tam giác, hồ đứng bo góc…"
+            />
 
-            <Select label="Vật liệu khung" value={frame} onChange={setFrame} options={OPTIONS.frame} />
+            <Select 
+              label="Vật liệu khung" 
+              value={frame} 
+              onChange={setFrame} 
+              options={OPTIONS.frame}
+              customValue={frameCustom}
+              onCustomChange={setFrameCustom}
+              placeholder="VD: khung tre, khung nhôm trắng, khung inox…"
+            />
 
-            <Select label="Chủ đề" value={theme} onChange={setTheme} options={OPTIONS.theme} />
+            <Select 
+              label="Chủ đề" 
+              value={theme} 
+              onChange={setTheme} 
+              options={OPTIONS.theme}
+              customValue={themeCustom}
+              onCustomChange={setThemeCustom}
+              placeholder="VD: sa mạc, hang động, cyberpunk…"
+            />
 
-            <Select label="Hardscape chính" value={hardscape} onChange={setHardscape} options={OPTIONS.hardscape} />
+            <Select 
+              label="Hardscape chính" 
+              value={hardscape} 
+              onChange={setHardscape} 
+              options={OPTIONS.hardscape}
+              customValue={hardscapeCustom}
+              onCustomChange={setHardscapeCustom}
+              placeholder="VD: lũa chữ S, đá vân mây, vách đá dựng…"
+            />
 
-            <CheckboxList label="Thực vật (chọn nhiều)" values={plants} onToggle={togglePlant} options={OPTIONS.plants} />
+            <CheckboxList 
+              label="Thực vật (chọn nhiều)" 
+              values={plants} 
+              onToggle={togglePlant} 
+              options={OPTIONS.plants}
+              customValue={plantsCustom}
+              onCustomChange={setPlantsCustom}
+              placeholder="VD: rêu java, trầu bà mini, fittonia, bromeliad…"
+            />
 
             <label style={{ display: "grid", gap: 4 }}>
               <div style={{ fontSize: 11, color: "#374151", fontWeight: 600 }}>Mật độ cây: {density}%</div>
@@ -604,9 +850,25 @@ export default function Page() {
               <span style={{ fontSize: 12, color: "#111827" }}>Gundam là điểm nhấn chính</span>
             </label>
 
-            <Select label="Ánh sáng" value={lighting} onChange={setLighting} options={OPTIONS.lighting} />
+            <Select 
+              label="Ánh sáng" 
+              value={lighting} 
+              onChange={setLighting} 
+              options={OPTIONS.lighting}
+              customValue={lightingCustom}
+              onCustomChange={setLightingCustom}
+              placeholder="VD: ánh sáng xanh dương, spotlight, neon…"
+            />
 
-            <Select label="Mood" value={mood} onChange={setMood} options={OPTIONS.mood} />
+            <Select 
+              label="Mood" 
+              value={mood} 
+              onChange={setMood} 
+              options={OPTIONS.mood}
+              customValue={moodCustom}
+              onCustomChange={setMoodCustom}
+              placeholder="VD: u ám, lễ hội, tối giản…"
+            />
 
             <Select label="Tỉ lệ ảnh" value={aspect} onChange={setAspect} options={OPTIONS.aspect} />
           </div>
@@ -689,9 +951,11 @@ export default function Page() {
         }}>
           {VIEWS.map((v) => (
             <PreviewCard
+              key={v.key}
               title={v.title}
               src={images[v.key as keyof typeof images] || ""}
               loading={!!loading[v.key as keyof typeof loading]}
+              progress={progress[v.key as keyof typeof progress] as number | undefined}
               onOpen={(src: string) => setActiveImg(src)}
             />
           ))}
