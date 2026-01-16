@@ -619,9 +619,9 @@ export default function Page() {
       setImages((prev) => ({ ...prev, front: heroData.imageUrl }));
       stopProgress("front");
 
-      // Nén ảnh HERO trước khi dùng làm reference
+      // Nén ảnh HERO trước khi dùng làm reference (giảm kích thước để tăng tốc)
       const heroImageUrl = heroData.imageUrl;
-      const compressedRef = await compressDataUrl(heroImageUrl, 768, 0.7);
+      const compressedRef = await compressDataUrl(heroImageUrl, 512, 0.5); // Giảm từ 768px/0.7 xuống 512px/0.5
 
       // STEP 2: Render 3 ảnh còn lại SONG SONG với reference image
       const refViews = VIEWS.filter(v => !v.isHero);
@@ -633,8 +633,13 @@ export default function Page() {
         };
         const angleName = angleMap[v.key] || v.key.toUpperCase();
         
-        const refPrompt = `Use reference image as exact scene. DO NOT change plants/hardscape. ONLY change camera angle to: ${angleName}. DO NOT return front view. ${v.suffix} GIỮ NGUYÊN 100% bố cục, cây, lũa, đá như ảnh reference. Chỉ thay vị trí camera theo góc được chỉ định. Bắt buộc thay đổi perspective và parallax. Nếu không thay đổi góc thì coi như sai. portrait 3:4, full tank shot, include entire terrarium, no cropping, no close-up. REQUIRED: portrait orientation 3:4. include entire terrarium. no close-up. no cropping.`;
+        // Prompt ngắn gọn hơn để tăng tốc xử lý
+        const refPrompt = `Reference scene. Change camera to ${angleName}. ${v.suffix} Keep same terrarium, plants, hardscape. Portrait 3:4, full tank shot.`;
 
+        // Thêm timeout 30s để tránh treo quá lâu
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+        
         const res = await fetch("/api/render-terrarium", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -643,9 +648,21 @@ export default function Page() {
             aspect: "3:4",
             referenceImageDataUrl: compressedRef 
           }),
+          signal: controller.signal,
         });
+        
+        clearTimeout(timeoutId);
 
-        const text = await res.text();
+        let text: string;
+        try {
+          text = await res.text();
+        } catch (fetchError: any) {
+          if (fetchError.name === 'AbortError') {
+            stopProgressError(v.key);
+            throw new Error('Request timeout (30s exceeded)');
+          }
+          throw fetchError;
+        }
         
         // Kiểm tra nếu response là HTML (payload too large)
         if (text.trim().startsWith('<!DOCTYPE html') || text.trim().startsWith('<html')) {

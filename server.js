@@ -32,8 +32,10 @@ app.post('/api/render-terrarium', async (req, res) => {
 
     const ai = new GoogleGenAI({ apiKey });
 
-    // Cưỡng ép tỉ lệ 3:4 portrait với prompt mạnh
-    const fullPrompt = `${prompt}\n\nCRITICAL REQUIREMENTS: Portrait orientation 3:4 aspect ratio. Full tank shot showing entire terrarium from top frame to base. No landscape/horizontal images. No close-up. No cropping. Include complete terrarium in frame. Vertical composition only.`;
+    // Tối ưu prompt: ngắn gọn hơn nếu có reference (để tăng tốc)
+    const fullPrompt = referenceImageDataUrl 
+      ? `${prompt} Portrait 3:4, full tank shot.` // Ngắn gọn cho reference-based
+      : `${prompt}\n\nCRITICAL: Portrait 3:4, full tank shot, no crop, no close-up.`; // Đầy đủ cho HERO
 
     let response;
     
