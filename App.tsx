@@ -66,15 +66,26 @@ const VIEWS = [
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: typeof OPTIONS.shape }) {
   return (
     <label style={{ display: "grid", gap: 6 }}>
-      <div style={{ fontSize: 12, opacity: 0.8 }}>{label}</div>
+      <div style={{ fontSize: 12, color: "#374151", fontWeight: 600 }}>{label}</div>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         style={{
           padding: "10px 12px",
           borderRadius: 12,
-          border: "1px solid #e5e7eb",
-          background: "white",
+          border: "1px solid #d1d5db",
+          background: "#ffffff",
+          color: "#111827",
+          fontSize: 14,
+          outline: "none",
+        }}
+        onFocus={(e) => {
+          e.target.style.borderColor = "#16a34a";
+          e.target.style.boxShadow = "0 0 0 4px rgba(22,163,74,0.15)";
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = "#d1d5db";
+          e.target.style.boxShadow = "none";
         }}
       >
         {options.map((o) => (
@@ -90,7 +101,7 @@ function Select({ label, value, onChange, options }: { label: string; value: str
 function CheckboxList({ label, values, onToggle, options }: { label: string; values: string[]; onToggle: (v: string) => void; options: typeof OPTIONS.plants }) {
   return (
     <div style={{ display: "grid", gap: 8 }}>
-      <div style={{ fontSize: 12, opacity: 0.8 }}>{label}</div>
+      <div style={{ fontSize: 12, color: "#374151", fontWeight: 600 }}>{label}</div>
       <div style={{ display: "grid", gap: 8 }}>
         {options.map((o) => {
           const checked = values.includes(o.value);
@@ -103,13 +114,13 @@ function CheckboxList({ label, values, onToggle, options }: { label: string; val
                 gap: 10,
                 padding: "8px 10px",
                 borderRadius: 12,
-                border: "1px solid #e5e7eb",
+                border: "1px solid #d1d5db",
                 background: checked ? "#f0fdf4" : "white",
                 cursor: "pointer",
               }}
             >
               <input type="checkbox" checked={checked} onChange={() => onToggle(o.value)} />
-              <span style={{ fontSize: 14 }}>{o.label}</span>
+              <span style={{ fontSize: 14, color: "#111827" }}>{o.label}</span>
             </label>
           );
         })}
@@ -184,9 +195,51 @@ export default function Page() {
   }
 
   return (
-    <div style={{ height: "100vh", display: "grid", gridTemplateColumns: "380px 1fr", background: "#f7f7f8" }}>
-      <aside style={{ padding: 16, borderRight: "1px solid #e5e7eb", background: "white", overflow: "auto" }}>
-        <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 12 }}>Terrarium Idea Builder</div>
+    <>
+      <style>{`
+        body {
+          color: #111827;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        }
+        input[type="range"] {
+          -webkit-appearance: none;
+          appearance: none;
+          height: 6px;
+          background: #e5e7eb;
+          border-radius: 3px;
+          outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 18px;
+          height: 18px;
+          background: #16a34a;
+          border-radius: 50%;
+          cursor: pointer;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input[type="range"]::-moz-range-thumb {
+          width: 18px;
+          height: 18px;
+          background: #16a34a;
+          border-radius: 50%;
+          cursor: pointer;
+          border: none;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+      `}</style>
+      <div style={{ height: "100vh", display: "grid", gridTemplateColumns: "380px 1fr", background: "#f6f7fb" }}>
+      <aside style={{ 
+        padding: 16, 
+        borderRight: "1px solid #e5e7eb", 
+        background: "#ffffff", 
+        overflow: "auto",
+        border: "1px solid #e5e7eb",
+        borderRadius: "0 16px 16px 0",
+        boxShadow: "0 6px 18px rgba(17,24,39,0.06)",
+      }}>
+        <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 12, color: "#111827" }}>Terrarium Idea Builder</div>
 
         <div style={{ display: "grid", gap: 12 }}>
           <Select label="Hình dáng hồ" value={shape} onChange={setShape} options={OPTIONS.shape} />
@@ -200,13 +253,30 @@ export default function Page() {
           <CheckboxList label="Thực vật (chọn nhiều)" values={plants} onToggle={togglePlant} options={OPTIONS.plants} />
 
           <label style={{ display: "grid", gap: 6 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>Mật độ cây: {density}%</div>
-            <input type="range" min="10" max="100" value={density} onChange={(e) => setDensity(Number(e.target.value))} />
+            <div style={{ fontSize: 12, color: "#374151", fontWeight: 600 }}>Mật độ cây: {density}%</div>
+            <input 
+              type="range" 
+              min="10" 
+              max="100" 
+              value={density} 
+              onChange={(e) => setDensity(Number(e.target.value))}
+              style={{
+                accentColor: "#16a34a",
+              }}
+            />
           </label>
 
-          <label style={{ display: "flex", gap: 10, alignItems: "center", padding: "8px 10px", border: "1px solid #e5e7eb", borderRadius: 12 }}>
+          <label style={{ 
+            display: "flex", 
+            gap: 10, 
+            alignItems: "center", 
+            padding: "8px 10px", 
+            border: "1px solid #d1d5db", 
+            borderRadius: 12,
+            background: "#ffffff",
+          }}>
             <input type="checkbox" checked={gundamMain} onChange={(e) => setGundamMain(e.target.checked)} />
-            <span style={{ fontSize: 14 }}>Gundam là điểm nhấn chính</span>
+            <span style={{ fontSize: 14, color: "#111827" }}>Gundam là điểm nhấn chính</span>
           </label>
 
           <Select label="Ánh sáng" value={lighting} onChange={setLighting} options={OPTIONS.lighting} />
@@ -217,14 +287,52 @@ export default function Page() {
 
           <button
             onClick={() => navigator.clipboard.writeText(basePrompt)}
-            style={{ padding: "12px 14px", borderRadius: 14, border: "1px solid #16a34a", background: "#16a34a", color: "white", fontWeight: 800, cursor: "pointer" }}
+            style={{ 
+              padding: "12px 14px", 
+              borderRadius: 14, 
+              border: "1px solid #16a34a", 
+              background: "#16a34a", 
+              color: "white", 
+              fontWeight: 800, 
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#15803d";
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(22,163,74,0.3)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#16a34a";
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
           >
             Copy Prompt
           </button>
 
           <button
             onClick={render4}
-            style={{ padding: "12px 14px", borderRadius: 14, border: "1px solid #0ea5e9", background: "#0ea5e9", color: "white", fontWeight: 800, cursor: "pointer" }}
+            style={{ 
+              padding: "12px 14px", 
+              borderRadius: 14, 
+              border: "1px solid #0ea5e9", 
+              background: "#0ea5e9", 
+              color: "white", 
+              fontWeight: 800, 
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#0284c7";
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(14,165,233,0.3)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#0ea5e9";
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
           >
             Render 4 góc
           </button>
@@ -234,16 +342,34 @@ export default function Page() {
       <main style={{ padding: 18, overflow: "auto" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           {VIEWS.map((v) => (
-            <div key={v.key} style={{ border: "1px solid #e5e7eb", borderRadius: 16, background: "white", overflow: "hidden" }}>
-              <div style={{ padding: 10, fontSize: 13, fontWeight: 800 }}>{v.title}</div>
-              <div style={{ height: 260, background: "#f7f7f8", display: "grid", placeItems: "center", position: "relative" }}>
+            <div 
+              key={v.key} 
+              style={{ 
+                border: "1px solid #e5e7eb", 
+                borderRadius: 16, 
+                background: "#ffffff", 
+                overflow: "hidden",
+                boxShadow: "0 6px 18px rgba(17,24,39,0.06)",
+              }}
+            >
+              <div style={{ 
+                padding: "10px 12px", 
+                fontSize: 14, 
+                fontWeight: 700, 
+                color: "#111827",
+                background: "#fafafa",
+                borderBottom: "1px solid #eef2f7",
+              }}>
+                {v.title}
+              </div>
+              <div style={{ height: 260, background: "#f6f7fb", display: "grid", placeItems: "center", position: "relative" }}>
                 {images[v.key as keyof typeof images] ? (
                   <img src={images[v.key as keyof typeof images]} alt={v.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
-                  <div style={{ opacity: 0.7, fontSize: 13 }}>Chưa có ảnh</div>
+                  <div style={{ color: "#6b7280", fontSize: 13 }}>Chưa có ảnh</div>
                 )}
                 {loading[v.key as keyof typeof loading] && (
-                  <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.65)", display: "grid", placeItems: "center", fontWeight: 800 }}>
+                  <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.65)", display: "grid", placeItems: "center", fontWeight: 800, color: "#111827" }}>
                     Rendering…
                   </div>
                 )}
@@ -253,10 +379,33 @@ export default function Page() {
         </div>
 
         <div style={{ marginTop: 14, display: "grid", gap: 8 }}>
-          <div style={{ fontSize: 14, fontWeight: 800 }}>BASE PROMPT</div>
-          <textarea readOnly value={basePrompt} style={{ width: "100%", minHeight: 140, padding: 12, borderRadius: 14, border: "1px solid #e5e7eb" }} />
+          <div style={{ fontSize: 14, fontWeight: 800, color: "#111827" }}>BASE PROMPT</div>
+          <textarea 
+            readOnly 
+            value={basePrompt} 
+            style={{ 
+              width: "100%", 
+              minHeight: 140, 
+              padding: 12, 
+              borderRadius: 14, 
+              border: "1px solid #d1d5db",
+              background: "#ffffff",
+              color: "#111827",
+              fontSize: 14,
+              outline: "none",
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = "#16a34a";
+              e.target.style.boxShadow = "0 0 0 4px rgba(22,163,74,0.15)";
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = "#d1d5db";
+              e.target.style.boxShadow = "none";
+            }}
+          />
         </div>
       </main>
     </div>
+    </>
   );
 }
