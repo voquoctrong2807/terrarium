@@ -65,23 +65,24 @@ const VIEWS = [
 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: typeof OPTIONS.shape }) {
   return (
-    <label style={{ display: "grid", gap: 6 }}>
-      <div style={{ fontSize: 12, color: "#374151", fontWeight: 600 }}>{label}</div>
+    <label style={{ display: "grid", gap: 4 }}>
+      <div style={{ fontSize: 11, color: "#374151", fontWeight: 600 }}>{label}</div>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         style={{
-          padding: "10px 12px",
-          borderRadius: 12,
+          padding: "8px 10px",
+          height: "38px",
+          borderRadius: 10,
           border: "1px solid #d1d5db",
           background: "#ffffff",
           color: "#111827",
-          fontSize: 14,
+          fontSize: 13,
           outline: "none",
         }}
         onFocus={(e) => {
           e.target.style.borderColor = "#16a34a";
-          e.target.style.boxShadow = "0 0 0 4px rgba(22,163,74,0.15)";
+          e.target.style.boxShadow = "0 0 0 3px rgba(22,163,74,0.15)";
         }}
         onBlur={(e) => {
           e.target.style.borderColor = "#d1d5db";
@@ -100,9 +101,9 @@ function Select({ label, value, onChange, options }: { label: string; value: str
 
 function CheckboxList({ label, values, onToggle, options }: { label: string; values: string[]; onToggle: (v: string) => void; options: typeof OPTIONS.plants }) {
   return (
-    <div style={{ display: "grid", gap: 8 }}>
-      <div style={{ fontSize: 12, color: "#374151", fontWeight: 600 }}>{label}</div>
-      <div style={{ display: "grid", gap: 8 }}>
+    <div style={{ display: "grid", gap: 4 }}>
+      <div style={{ fontSize: 11, color: "#374151", fontWeight: 600 }}>{label}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
         {options.map((o) => {
           const checked = values.includes(o.value);
           return (
@@ -111,16 +112,17 @@ function CheckboxList({ label, values, onToggle, options }: { label: string; val
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 10,
-                padding: "8px 10px",
-                borderRadius: 12,
+                gap: 6,
+                padding: "6px 8px",
+                height: "36px",
+                borderRadius: 8,
                 border: "1px solid #d1d5db",
                 background: checked ? "#f0fdf4" : "white",
                 cursor: "pointer",
               }}
             >
-              <input type="checkbox" checked={checked} onChange={() => onToggle(o.value)} />
-              <span style={{ fontSize: 14, color: "#111827" }}>{o.label}</span>
+              <input type="checkbox" checked={checked} onChange={() => onToggle(o.value)} style={{ width: "14px", height: "14px" }} />
+              <span style={{ fontSize: 12, color: "#111827" }}>{o.label}</span>
             </label>
           );
         })}
@@ -131,14 +133,17 @@ function CheckboxList({ label, values, onToggle, options }: { label: string; val
 
 function PreviewCard({ title, src, loading, onOpen }: { title: string; src: string; loading: boolean; onOpen: (src: string) => void }) {
   return (
-    <div style={{ border: "1px solid #e5e7eb", borderRadius: 16, background: "white", overflow: "hidden", boxShadow: "0 6px 18px rgba(17,24,39,0.06)" }}>
+    <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, background: "white", overflow: "hidden", boxShadow: "0 4px 12px rgba(17,24,39,0.05)", height: "100%", display: "flex", flexDirection: "column" }}>
       <div style={{ 
-        padding: "10px 12px", 
-        fontSize: 14, 
+        padding: "6px 10px", 
+        fontSize: 12, 
         fontWeight: 700, 
         color: "#111827",
         background: "#fafafa",
         borderBottom: "1px solid #eef2f7",
+        height: "28px",
+        display: "flex",
+        alignItems: "center",
       }}>
         {title}
       </div>
@@ -147,7 +152,8 @@ function PreviewCard({ title, src, loading, onOpen }: { title: string; src: stri
       <div
         style={{
           width: "100%",
-          aspectRatio: "3 / 4",
+          flex: 1,
+          minHeight: 0,
           background: "#f1f5f9",
           position: "relative",
           overflow: "hidden",
@@ -156,39 +162,42 @@ function PreviewCard({ title, src, loading, onOpen }: { title: string; src: stri
         onClick={() => src && !src.startsWith('ERROR:') && onOpen(src)}
         title={src && !src.startsWith('ERROR:') ? "Bấm để xem full" : ""}
       >
-        {src ? (
-          src.startsWith('ERROR:') ? (
-            <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#dc2626", fontSize: 12, padding: 12, textAlign: "center" }}>
-              {src}
-            </div>
+        <div style={{ width: "100%", height: "100%", aspectRatio: "3 / 4", position: "relative" }}>
+          {src ? (
+            src.startsWith('ERROR:') ? (
+              <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#dc2626", fontSize: 11, padding: 10, textAlign: "center" }}>
+                {src}
+              </div>
+            ) : (
+              <img
+                src={src}
+                alt={title}
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              />
+            )
           ) : (
-            <img
-              src={src}
-              alt={title}
-              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-            />
-          )
-        ) : (
-          <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#64748b" }}>
-            Chưa có ảnh
-          </div>
-        )}
+            <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#64748b", fontSize: 12 }}>
+              Chưa có ảnh
+            </div>
+          )}
 
-        {loading && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "rgba(255,255,255,0.7)",
-              display: "grid",
-              placeItems: "center",
-              fontWeight: 800,
-              color: "#111827",
-            }}
-          >
-            Rendering…
-          </div>
-        )}
+          {loading && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "rgba(255,255,255,0.7)",
+                display: "grid",
+                placeItems: "center",
+                fontWeight: 800,
+                color: "#111827",
+                fontSize: 12,
+              }}
+            >
+              Rendering…
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -319,9 +328,17 @@ export default function Page() {
     setLoading({ front: false, left: false, low: false, top: false });
   }
 
+  const [showPrompt, setShowPrompt] = useState(false);
+
   return (
     <>
       <style>{`
+        html, body, #root {
+          height: 100%;
+          overflow: hidden;
+          margin: 0;
+          padding: 0;
+        }
         body {
           color: #111827;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
@@ -329,7 +346,7 @@ export default function Page() {
         input[type="range"] {
           -webkit-appearance: none;
           appearance: none;
-          height: 6px;
+          height: 5px;
           background: #e5e7eb;
           border-radius: 3px;
           outline: none;
@@ -337,16 +354,16 @@ export default function Page() {
         input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
           background: #16a34a;
           border-radius: 50%;
           cursor: pointer;
           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         input[type="range"]::-moz-range-thumb {
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
           background: #16a34a;
           border-radius: 50%;
           cursor: pointer;
@@ -354,19 +371,21 @@ export default function Page() {
           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
       `}</style>
-      <div style={{ height: "100vh", display: "grid", gridTemplateColumns: "380px 1fr", background: "#f6f7fb" }}>
+      <div style={{ height: "100vh", display: "grid", gridTemplateColumns: "340px 1fr", background: "#f6f7fb", overflow: "hidden" }}>
       <aside style={{ 
-        padding: 16, 
+        padding: "12px 14px", 
         borderRight: "1px solid #e5e7eb", 
         background: "#ffffff", 
-        overflow: "auto",
+        overflow: "hidden",
         border: "1px solid #e5e7eb",
-        borderRadius: "0 16px 16px 0",
-        boxShadow: "0 6px 18px rgba(17,24,39,0.06)",
+        borderRadius: "0 12px 12px 0",
+        boxShadow: "0 4px 12px rgba(17,24,39,0.05)",
+        display: "flex",
+        flexDirection: "column",
       }}>
-        <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 12, color: "#111827" }}>Terrarium Idea Builder</div>
+        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 10, color: "#111827" }}>Terrarium Idea Builder</div>
 
-        <div style={{ display: "grid", gap: 12 }}>
+        <div style={{ display: "grid", gap: 8, flex: 1, overflowY: "auto", paddingRight: "4px" }}>
           <Select label="Hình dáng hồ" value={shape} onChange={setShape} options={OPTIONS.shape} />
 
           <Select label="Vật liệu khung" value={frame} onChange={setFrame} options={OPTIONS.frame} />
@@ -377,8 +396,8 @@ export default function Page() {
 
           <CheckboxList label="Thực vật (chọn nhiều)" values={plants} onToggle={togglePlant} options={OPTIONS.plants} />
 
-          <label style={{ display: "grid", gap: 6 }}>
-            <div style={{ fontSize: 12, color: "#374151", fontWeight: 600 }}>Mật độ cây: {density}%</div>
+          <label style={{ display: "grid", gap: 4 }}>
+            <div style={{ fontSize: 11, color: "#374151", fontWeight: 600 }}>Mật độ cây: {density}%</div>
             <input 
               type="range" 
               min="10" 
@@ -393,15 +412,16 @@ export default function Page() {
 
           <label style={{ 
             display: "flex", 
-            gap: 10, 
+            gap: 8, 
             alignItems: "center", 
-            padding: "8px 10px", 
+            padding: "6px 8px", 
+            height: "36px",
             border: "1px solid #d1d5db", 
-            borderRadius: 12,
+            borderRadius: 8,
             background: "#ffffff",
           }}>
-            <input type="checkbox" checked={gundamMain} onChange={(e) => setGundamMain(e.target.checked)} />
-            <span style={{ fontSize: 14, color: "#111827" }}>Gundam là điểm nhấn chính</span>
+            <input type="checkbox" checked={gundamMain} onChange={(e) => setGundamMain(e.target.checked)} style={{ width: "14px", height: "14px" }} />
+            <span style={{ fontSize: 12, color: "#111827" }}>Gundam là điểm nhấn chính</span>
           </label>
 
           <Select label="Ánh sáng" value={lighting} onChange={setLighting} options={OPTIONS.lighting} />
@@ -413,24 +433,22 @@ export default function Page() {
           <button
             onClick={() => navigator.clipboard.writeText(basePrompt)}
             style={{ 
-              padding: "12px 14px", 
-              borderRadius: 14, 
+              padding: "10px 12px", 
+              height: "38px",
+              borderRadius: 10, 
               border: "1px solid #16a34a", 
               background: "#16a34a", 
               color: "white", 
-              fontWeight: 800, 
+              fontWeight: 700, 
+              fontSize: 13,
               cursor: "pointer",
               transition: "all 0.2s",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "#15803d";
-              e.currentTarget.style.transform = "translateY(-1px)";
-              e.currentTarget.style.boxShadow = "0 4px 12px rgba(22,163,74,0.3)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "#16a34a";
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
             }}
           >
             Copy Prompt
@@ -439,24 +457,22 @@ export default function Page() {
           <button
             onClick={render4}
             style={{ 
-              padding: "12px 14px", 
-              borderRadius: 14, 
+              padding: "10px 12px", 
+              height: "38px",
+              borderRadius: 10, 
               border: "1px solid #0ea5e9", 
               background: "#0ea5e9", 
               color: "white", 
-              fontWeight: 800, 
+              fontWeight: 700, 
+              fontSize: 13,
               cursor: "pointer",
               transition: "all 0.2s",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "#0284c7";
-              e.currentTarget.style.transform = "translateY(-1px)";
-              e.currentTarget.style.boxShadow = "0 4px 12px rgba(14,165,233,0.3)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "#0ea5e9";
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
             }}
           >
             Render 4 góc
@@ -464,10 +480,17 @@ export default function Page() {
         </div>
       </aside>
 
-      <main style={{ padding: 18, overflow: "auto" }}>
+      <main style={{ padding: 12, overflow: "hidden", display: "flex", flexDirection: "column", height: "100vh" }}>
         <ImageModal src={activeImg} onClose={() => setActiveImg(null)} />
         
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div style={{ 
+          display: "grid", 
+          gridTemplateColumns: "1fr 1fr", 
+          gridTemplateRows: "1fr 1fr",
+          gap: 12, 
+          flex: 1,
+          minHeight: 0,
+        }}>
           {VIEWS.map((v) => (
             <PreviewCard
               key={v.key}
@@ -479,31 +502,41 @@ export default function Page() {
           ))}
         </div>
 
-        <div style={{ marginTop: 14, display: "grid", gap: 8 }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: "#111827" }}>BASE PROMPT</div>
-          <textarea 
-            readOnly 
-            value={basePrompt} 
-            style={{ 
-              width: "100%", 
-              minHeight: 140, 
-              padding: 12, 
-              borderRadius: 14, 
+        <div style={{ marginTop: 8 }}>
+          <button
+            onClick={() => setShowPrompt(!showPrompt)}
+            style={{
+              padding: "6px 10px",
+              fontSize: 11,
+              fontWeight: 600,
+              color: "#374151",
+              background: "transparent",
               border: "1px solid #d1d5db",
-              background: "#ffffff",
-              color: "#111827",
-              fontSize: 14,
-              outline: "none",
+              borderRadius: 6,
+              cursor: "pointer",
             }}
-            onFocus={(e) => {
-              e.target.style.borderColor = "#16a34a";
-              e.target.style.boxShadow = "0 0 0 4px rgba(22,163,74,0.15)";
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = "#d1d5db";
-              e.target.style.boxShadow = "none";
-            }}
-          />
+          >
+            {showPrompt ? "▼" : "▶"} BASE PROMPT
+          </button>
+          {showPrompt && (
+            <textarea 
+              readOnly 
+              value={basePrompt} 
+              style={{ 
+                width: "100%", 
+                height: "100px",
+                marginTop: 6,
+                padding: 10, 
+                borderRadius: 10, 
+                border: "1px solid #d1d5db",
+                background: "#ffffff",
+                color: "#111827",
+                fontSize: 12,
+                outline: "none",
+                resize: "none",
+              }}
+            />
+          )}
         </div>
       </main>
     </div>
