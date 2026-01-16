@@ -13,8 +13,12 @@ app.use(express.json());
 
 app.post('/api/render-terrarium', async (req, res) => {
   try {
-    const { prompt, aspect = "3:4" } = req.body;
-    console.log('Received request:', { prompt: prompt?.substring(0, 100) + '...', aspect });
+    const { prompt, aspect = "3:4", referenceImageDataUrl } = req.body;
+    console.log('Received request:', { 
+      prompt: prompt?.substring(0, 100) + '...', 
+      aspect, 
+      hasReference: !!referenceImageDataUrl 
+    });
 
     const apiKey = process.env.GOOGLE_AI_STUDIO_API_KEY;
     if (!apiKey) {
@@ -27,14 +31,53 @@ app.post('/api/render-terrarium', async (req, res) => {
 
     const ai = new GoogleGenAI({ apiKey });
 
-    // Nano Banana Pro = gemini-3-pro-image-preview
     // Cưỡng ép tỉ lệ 3:4 portrait với prompt mạnh
     const fullPrompt = `${prompt}\n\nCRITICAL REQUIREMENTS: Portrait orientation 3:4 aspect ratio. Full tank shot showing entire terrarium from top frame to base. No landscape/horizontal images. No close-up. No cropping. Include complete terrarium in frame. Vertical composition only.`;
+
+    let response;
     
-    const response = await ai.models.generateContent({
-      model: "gemini-3-pro-image-preview",
-      contents: fullPrompt,
-    });
+    if (referenceImageDataUrl) {
+      // MULTIMODAL: có reference image
+      // Parse dataURL: data:image/png;base64,...
+      const dataUrlMatch = referenceImageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if (!dataUrlMatch) {
+        return res.status(400).json({
+          ok: false,
+          error: "Invalid referenceImageDataUrl format"
+        });
+      }
+
+      const mimeType = dataUrlMatch[1] || "image/png";
+      const base64Data = dataUrlMatch[2];
+
+      console.log('Using reference image for multimodal generation');
+
+      // Gọi với multimodal: image + text
+      response = await ai.models.generateContent({
+        model: "gemini-3-pro-image-preview",
+        contents: [
+          {
+            parts: [
+              {
+                inlineData: {
+                  mimeType: mimeType,
+                  data: base64Data
+                }
+              },
+              {
+                text: fullPrompt
+              }
+            ]
+          }
+        ],
+      });
+    } else {
+      // TEXT-ONLY: không có reference (tạo HERO)
+      response = await ai.models.generateContent({
+        model: "gemini-3-pro-image-preview",
+        contents: fullPrompt,
+      });
+    }
 
     const parts = response?.candidates?.[0]?.content?.parts ?? [];
     const inline = parts.find((p) => p.inlineData?.data);

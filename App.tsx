@@ -57,10 +57,10 @@ const OPTIONS = {
 };
 
 const VIEWS = [
-  { key: "front", title: "Chính diện", suffix: "Góc chính diện, ngang tầm mắt, full tank shot thấy trọn hồ. portrait 3:4, no crop." },
-  { key: "left", title: "Trái", suffix: "Góc trái, vẫn full tank shot thấy trọn hồ. portrait 3:4, no crop." },
-  { key: "low", title: "Dưới", suffix: "Góc thấp từ dưới nhìn lên, vẫn full tank shot thấy trọn hồ. portrait 3:4, no crop." },
-  { key: "top", title: "Trên", suffix: "Góc top-down nhưng vẫn giữ full view thấy trọn hồ trong khung (không zoom vào hardscape). portrait 3:4, no crop." },
+  { key: "front", title: "Chính diện", suffix: "Góc chính diện, ngang tầm mắt, full tank shot.", isHero: true },
+  { key: "left", title: "Trái", suffix: "Góc trái, vẫn full tank shot, giữ nguyên mọi thứ như ảnh reference.", isHero: false },
+  { key: "low", title: "Dưới", suffix: "Góc thấp từ dưới nhìn lên, vẫn full tank shot, giữ nguyên như reference.", isHero: false },
+  { key: "top", title: "Trên", suffix: "Góc từ trên xuống nhưng vẫn thấy trọn hồ trong khung (không zoom), giữ nguyên như reference.", isHero: false },
 ];
 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: typeof OPTIONS.shape }) {
@@ -148,7 +148,7 @@ function PreviewCard({ title, src, loading, onOpen }: { title: string; src: stri
         {title}
       </div>
 
-      {/* KHUNG 3:4 */}
+      {/* KHUNG DỌC 3:4 với object-contain */}
       <div
         style={{
           width: "100%",
@@ -158,11 +158,20 @@ function PreviewCard({ title, src, loading, onOpen }: { title: string; src: stri
           position: "relative",
           overflow: "hidden",
           cursor: src && !src.startsWith('ERROR:') ? "zoom-in" : "default",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "8px",
         }}
         onClick={() => src && !src.startsWith('ERROR:') && onOpen(src)}
         title={src && !src.startsWith('ERROR:') ? "Bấm để xem full" : ""}
       >
-        <div style={{ width: "100%", height: "100%", aspectRatio: "3 / 4", position: "relative" }}>
+        <div style={{ 
+          width: "100%", 
+          aspectRatio: "3 / 4", 
+          position: "relative",
+          background: "#f1f5f9",
+        }}>
           {src ? (
             src.startsWith('ERROR:') ? (
               <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#dc2626", fontSize: 11, padding: 10, textAlign: "center" }}>
@@ -172,7 +181,12 @@ function PreviewCard({ title, src, loading, onOpen }: { title: string; src: stri
               <img
                 src={src}
                 alt={title}
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                style={{ 
+                  width: "100%", 
+                  height: "100%", 
+                  objectFit: "contain", 
+                  display: "block" 
+                }}
               />
             )
           ) : (
@@ -289,45 +303,85 @@ export default function Page() {
     // Bật loading cùng lúc
     setLoading({ front: true, left: true, low: true, top: true });
 
-    const jobs = VIEWS.map(async (v) => {
-      const prompt = `${basePrompt} ${v.suffix} REQUIRED: portrait orientation 3:4. include entire terrarium. no close-up. no cropping.`;
+    try {
+      // STEP 1: Render HERO (front) trước
+      const heroView = VIEWS.find(v => v.key === "front")!;
+      const heroPrompt = `${basePrompt} ${heroView.suffix} Ảnh dọc portrait tỉ lệ 3:4. Full tank shot: thấy TRỌN hồ terrarium từ viền trên đến chân đế. KHÔNG ảnh ngang. KHÔNG close-up. KHÔNG crop. REQUIRED: portrait orientation 3:4. include entire terrarium. no close-up. no cropping.`;
 
-      const res = await fetch("/api/render-terrarium", {
+      const heroRes = await fetch("/api/render-terrarium", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, aspect: "3:4" }),
+        body: JSON.stringify({ prompt: heroPrompt, aspect: "3:4" }),
       });
 
-      const text = await res.text();
-      let data: any = null;
+      const heroText = await heroRes.text();
+      let heroData: any = null;
       try {
-        data = text ? JSON.parse(text) : null;
+        heroData = heroText ? JSON.parse(heroText) : null;
       } catch {
-        data = null;
+        heroData = null;
       }
 
-      if (!res.ok || !data?.ok || !data?.imageUrl) {
-        throw new Error(`Render ${v.key} failed: ${data?.error || text || res.status}`);
+      if (!heroRes.ok || !heroData?.ok || !heroData?.imageUrl) {
+        throw new Error(`Render HERO failed: ${heroData?.error || heroText || heroRes.status}`);
       }
 
-      return { key: v.key, url: data.imageUrl };
-    });
+      // Lưu HERO image
+      setImages((prev) => ({ ...prev, front: heroData.imageUrl }));
+      setLoading((prev) => ({ ...prev, front: false }));
 
-    const results = await Promise.allSettled(jobs);
+      const heroImageUrl = heroData.imageUrl;
 
-    const nextImages: any = {};
-    results.forEach((r) => {
-      if (r.status === "fulfilled") {
-        nextImages[r.value.key] = r.value.url;
-      } else {
-        console.error(r.reason);
-        const key = VIEWS.find(v => r.reason?.message?.includes(v.key))?.key || "unknown";
-        nextImages[key] = `ERROR: ${r.reason?.message || 'Unknown error'}`;
-      }
-    });
+      // STEP 2: Render 3 ảnh còn lại SONG SONG với reference image
+      const refViews = VIEWS.filter(v => !v.isHero);
+      const refJobs = refViews.map(async (v) => {
+        const refPrompt = `${basePrompt} ${v.suffix} GIỮ NGUYÊN 100% bố cục, cây, lũa, đá như ảnh reference. Chỉ thay góc chụp/camera. Không thêm/bớt chi tiết. Ảnh dọc portrait tỉ lệ 3:4. Full tank shot: thấy TRỌN hồ terrarium từ viền trên đến chân đế. KHÔNG ảnh ngang. KHÔNG close-up. KHÔNG crop. REQUIRED: portrait orientation 3:4. include entire terrarium. no close-up. no cropping.`;
 
-    setImages((prev) => ({ ...prev, ...nextImages }));
-    setLoading({ front: false, left: false, low: false, top: false });
+        const res = await fetch("/api/render-terrarium", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            prompt: refPrompt, 
+            aspect: "3:4",
+            referenceImageDataUrl: heroImageUrl 
+          }),
+        });
+
+        const text = await res.text();
+        let data: any = null;
+        try {
+          data = text ? JSON.parse(text) : null;
+        } catch {
+          data = null;
+        }
+
+        if (!res.ok || !data?.ok || !data?.imageUrl) {
+          throw new Error(`Render ${v.key} failed: ${data?.error || text || res.status}`);
+        }
+
+        return { key: v.key, url: data.imageUrl };
+      });
+
+      const refResults = await Promise.allSettled(refJobs);
+
+      const nextImages: any = {};
+      refResults.forEach((r, index) => {
+        if (r.status === "fulfilled") {
+          nextImages[r.value.key] = r.value.url;
+        } else {
+          console.error(r.reason);
+          const key = refViews[index].key;
+          nextImages[key] = `ERROR: ${r.reason?.message || 'Unknown error'}`;
+        }
+      });
+
+      setImages((prev) => ({ ...prev, ...nextImages }));
+      setLoading({ front: false, left: false, low: false, top: false });
+    } catch (error: any) {
+      console.error("Render error:", error);
+      setImages((prev) => ({ ...prev, front: `ERROR: ${error.message || 'Unknown error'}` }));
+      setLoading({ front: false, left: false, low: false, top: false });
+    }
   }
 
   const [showPrompt, setShowPrompt] = useState(false);
