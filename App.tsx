@@ -57,10 +57,10 @@ const OPTIONS = {
 };
 
 const VIEWS = [
-  { key: "front", title: "Chính diện", suffix: "Góc chụp chính diện, ngang tầm mắt, thấy rõ toàn bộ bố cục tổng thể." },
-  { key: "left", title: "Trái", suffix: "Góc chụp từ bên trái, thấy rõ chiều sâu và các lớp bố cục." },
-  { key: "low", title: "Dưới", suffix: "Góc chụp thấp từ bên dưới nhìn lên, nhấn mạnh độ cao và không gian." },
-  { key: "top", title: "Trên", suffix: "Góc chụp từ trên xuống (top-down), thấy rõ layout hardscape và vị trí cây." },
+  { key: "front", title: "Chính diện", suffix: "Góc chính diện, ngang tầm mắt, full tank shot thấy trọn hồ. portrait 3:4, no crop." },
+  { key: "left", title: "Trái", suffix: "Góc trái, vẫn full tank shot thấy trọn hồ. portrait 3:4, no crop." },
+  { key: "low", title: "Dưới", suffix: "Góc thấp từ dưới nhìn lên, vẫn full tank shot thấy trọn hồ. portrait 3:4, no crop." },
+  { key: "top", title: "Trên", suffix: "Góc top-down nhưng vẫn giữ full view thấy trọn hồ trong khung (không zoom vào hardscape). portrait 3:4, no crop." },
 ];
 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: typeof OPTIONS.shape }) {
@@ -276,6 +276,8 @@ export default function Page() {
       `Nền hồ gồm đất, sỏi, đá và rêu tự nhiên. Ánh sáng ${labelOf(OPTIONS.lighting, lighting)}, mood ${labelOf(OPTIONS.mood, mood)}.`,
       `Phong cách ảnh: photorealistic, ultra realistic, high detail, texture vật liệu thật, ánh sáng mềm, DOF nông, bố cục gọn gàng, không hoạt hình, không minh họa.`,
       `Cùng một hồ, cùng bố cục, chỉ thay góc chụp.`,
+      `Chụp toàn cảnh (wide full view), full tank shot, include entire glass terrarium from top frame to base, centered composition.`,
+      `Ảnh dọc portrait 3:4. Full tank shot: thấy trọn hồ terrarium từ viền trên đến chân đế. Bố cục nằm giữa khung. KHÔNG ảnh ngang. KHÔNG cận cảnh. KHÔNG crop. Không chụp cận cảnh, không macro, không close-up, không chỉ chụp phần ngọn, không crop.`,
     ].filter(Boolean).join(" ");
   }, [shape, frame, theme, hardscape, plants, density, lighting, mood, aspect, gundamMain]);
 
@@ -288,7 +290,7 @@ export default function Page() {
     setLoading({ front: true, left: true, low: true, top: true });
 
     const jobs = VIEWS.map(async (v) => {
-      const prompt = `${basePrompt} ${v.suffix} Tỉ lệ ảnh 3:4. Ảnh dọc 3:4.`;
+      const prompt = `${basePrompt} ${v.suffix} REQUIRED: portrait orientation 3:4. include entire terrarium. no close-up. no cropping.`;
 
       const res = await fetch("/api/render-terrarium", {
         method: "POST",

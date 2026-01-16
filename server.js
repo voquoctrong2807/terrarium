@@ -28,8 +28,8 @@ app.post('/api/render-terrarium', async (req, res) => {
     const ai = new GoogleGenAI({ apiKey });
 
     // Nano Banana Pro = gemini-3-pro-image-preview
-    // Thêm aspect vào prompt để ép tỉ lệ ảnh
-    const fullPrompt = `${prompt}\nTỉ lệ khung hình bắt buộc: ${aspect}. Ảnh dọc đúng tỉ lệ ${aspect}, không ảnh ngang.`;
+    // Cưỡng ép tỉ lệ 3:4 portrait với prompt mạnh
+    const fullPrompt = `${prompt}\n\nCRITICAL REQUIREMENTS: Portrait orientation 3:4 aspect ratio. Full tank shot showing entire terrarium from top frame to base. No landscape/horizontal images. No close-up. No cropping. Include complete terrarium in frame. Vertical composition only.`;
     
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-image-preview",
