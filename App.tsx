@@ -483,7 +483,7 @@ export default function Page() {
       `}</style>
       <div style={{ height: "100vh", display: "grid", gridTemplateColumns: "340px 1fr", background: "#f6f7fb", overflow: "hidden" }}>
       <aside style={{ 
-        padding: "12px 14px", 
+        height: "100vh",
         borderRight: "1px solid #e5e7eb", 
         background: "#ffffff", 
         overflow: "hidden",
@@ -493,53 +493,84 @@ export default function Page() {
         display: "flex",
         flexDirection: "column",
       }}>
-        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 10, color: "#111827" }}>Terrarium Idea Builder</div>
+        {/* Header - Cố định trên */}
+        <div style={{ 
+          padding: "12px 14px 10px 14px",
+          fontSize: 16, 
+          fontWeight: 800, 
+          color: "#111827",
+          borderBottom: "1px solid #e5e7eb",
+        }}>
+          Terrarium Idea Builder
+        </div>
 
-        <div style={{ display: "grid", gap: 8, flex: 1, overflow: "hidden", paddingRight: "4px" }}>
-          <Select label="Hình dáng hồ" value={shape} onChange={setShape} options={OPTIONS.shape} />
+        {/* ControlsBody - Có thể scroll */}
+        <div style={{ 
+          flex: 1, 
+          overflow: "auto", 
+          padding: "12px 14px",
+          paddingBottom: "12px",
+          paddingRight: "10px",
+        }}>
+          <div style={{ display: "grid", gap: 8 }}>
+            <Select label="Hình dáng hồ" value={shape} onChange={setShape} options={OPTIONS.shape} />
 
-          <Select label="Vật liệu khung" value={frame} onChange={setFrame} options={OPTIONS.frame} />
+            <Select label="Vật liệu khung" value={frame} onChange={setFrame} options={OPTIONS.frame} />
 
-          <Select label="Chủ đề" value={theme} onChange={setTheme} options={OPTIONS.theme} />
+            <Select label="Chủ đề" value={theme} onChange={setTheme} options={OPTIONS.theme} />
 
-          <Select label="Hardscape chính" value={hardscape} onChange={setHardscape} options={OPTIONS.hardscape} />
+            <Select label="Hardscape chính" value={hardscape} onChange={setHardscape} options={OPTIONS.hardscape} />
 
-          <CheckboxList label="Thực vật (chọn nhiều)" values={plants} onToggle={togglePlant} options={OPTIONS.plants} />
+            <CheckboxList label="Thực vật (chọn nhiều)" values={plants} onToggle={togglePlant} options={OPTIONS.plants} />
 
-          <label style={{ display: "grid", gap: 4 }}>
-            <div style={{ fontSize: 11, color: "#374151", fontWeight: 600 }}>Mật độ cây: {density}%</div>
-            <input 
-              type="range" 
-              min="10" 
-              max="100" 
-              value={density} 
-              onChange={(e) => setDensity(Number(e.target.value))}
-              style={{
-                accentColor: "#16a34a",
-              }}
-            />
-          </label>
+            <label style={{ display: "grid", gap: 4 }}>
+              <div style={{ fontSize: 11, color: "#374151", fontWeight: 600 }}>Mật độ cây: {density}%</div>
+              <input 
+                type="range" 
+                min="10" 
+                max="100" 
+                value={density} 
+                onChange={(e) => setDensity(Number(e.target.value))}
+                style={{
+                  accentColor: "#16a34a",
+                }}
+              />
+            </label>
 
-          <label style={{ 
-            display: "flex", 
-            gap: 8, 
-            alignItems: "center", 
-            padding: "6px 8px", 
-            height: "36px",
-            border: "1px solid #d1d5db", 
-            borderRadius: 8,
-            background: "#ffffff",
-          }}>
-            <input type="checkbox" checked={gundamMain} onChange={(e) => setGundamMain(e.target.checked)} style={{ width: "14px", height: "14px" }} />
-            <span style={{ fontSize: 12, color: "#111827" }}>Gundam là điểm nhấn chính</span>
-          </label>
+            <label style={{ 
+              display: "flex", 
+              gap: 8, 
+              alignItems: "center", 
+              padding: "6px 8px", 
+              height: "36px",
+              border: "1px solid #d1d5db", 
+              borderRadius: 8,
+              background: "#ffffff",
+            }}>
+              <input type="checkbox" checked={gundamMain} onChange={(e) => setGundamMain(e.target.checked)} style={{ width: "14px", height: "14px" }} />
+              <span style={{ fontSize: 12, color: "#111827" }}>Gundam là điểm nhấn chính</span>
+            </label>
 
-          <Select label="Ánh sáng" value={lighting} onChange={setLighting} options={OPTIONS.lighting} />
+            <Select label="Ánh sáng" value={lighting} onChange={setLighting} options={OPTIONS.lighting} />
 
-          <Select label="Mood" value={mood} onChange={setMood} options={OPTIONS.mood} />
+            <Select label="Mood" value={mood} onChange={setMood} options={OPTIONS.mood} />
 
-          <Select label="Tỉ lệ ảnh" value={aspect} onChange={setAspect} options={OPTIONS.aspect} />
+            <Select label="Tỉ lệ ảnh" value={aspect} onChange={setAspect} options={OPTIONS.aspect} />
+          </div>
+        </div>
 
+        {/* FooterActions - Cố định dưới, luôn thấy nút */}
+        <div style={{ 
+          position: "sticky",
+          bottom: 0,
+          background: "#ffffff",
+          padding: "12px 14px",
+          borderTop: "1px solid #e5e7eb",
+          zIndex: 5,
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+        }}>
           <button
             onClick={() => navigator.clipboard.writeText(basePrompt)}
             style={{ 
@@ -553,6 +584,7 @@ export default function Page() {
               fontSize: 13,
               cursor: "pointer",
               transition: "all 0.2s",
+              width: "100%",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "#15803d";
@@ -577,6 +609,7 @@ export default function Page() {
               fontSize: 13,
               cursor: "pointer",
               transition: "all 0.2s",
+              width: "100%",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "#0284c7";
@@ -603,7 +636,6 @@ export default function Page() {
         }}>
           {VIEWS.map((v) => (
             <PreviewCard
-              key={v.key}
               title={v.title}
               src={images[v.key as keyof typeof images] || ""}
               loading={!!loading[v.key as keyof typeof loading]}
