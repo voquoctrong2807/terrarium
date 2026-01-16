@@ -299,6 +299,46 @@ export default function Page() {
     setPlants((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
   };
 
+  // Nén ảnh trước khi gửi reference
+  async function compressDataUrl(dataUrl: string, maxSize: number = 768, quality: number = 0.7): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // Scale theo maxSize (chiều dài lớn nhất)
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(compressedDataUrl);
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = dataUrl;
+    });
+  }
+
   async function render4() {
     // Bật loading cùng lúc
     setLoading({ front: true, left: true, low: true, top: true });
@@ -316,6 +356,12 @@ export default function Page() {
 
       const heroText = await heroRes.text();
       let heroData: any = null;
+      
+      // Kiểm tra nếu response là HTML (payload too large)
+      if (heroText.trim().startsWith('<!DOCTYPE html') || heroText.trim().startsWith('<html')) {
+        throw new Error('Payload too large / Server limit exceeded');
+      }
+
       try {
         heroData = heroText ? JSON.parse(heroText) : null;
       } catch {
@@ -323,14 +369,16 @@ export default function Page() {
       }
 
       if (!heroRes.ok || !heroData?.ok || !heroData?.imageUrl) {
-        throw new Error(`Render HERO failed: ${heroData?.error || heroText || heroRes.status}`);
+        throw new Error(`Render HERO failed: ${heroData?.error || 'Unknown error'}`);
       }
 
       // Lưu HERO image
       setImages((prev) => ({ ...prev, front: heroData.imageUrl }));
       setLoading((prev) => ({ ...prev, front: false }));
 
+      // Nén ảnh HERO trước khi dùng làm reference
       const heroImageUrl = heroData.imageUrl;
+      const compressedRef = await compressDataUrl(heroImageUrl, 768, 0.7);
 
       // STEP 2: Render 3 ảnh còn lại SONG SONG với reference image
       const refViews = VIEWS.filter(v => !v.isHero);
@@ -343,11 +391,17 @@ export default function Page() {
           body: JSON.stringify({ 
             prompt: refPrompt, 
             aspect: "3:4",
-            referenceImageDataUrl: heroImageUrl 
+            referenceImageDataUrl: compressedRef 
           }),
         });
 
         const text = await res.text();
+        
+        // Kiểm tra nếu response là HTML (payload too large)
+        if (text.trim().startsWith('<!DOCTYPE html') || text.trim().startsWith('<html')) {
+          throw new Error('Payload too large / Server limit exceeded');
+        }
+
         let data: any = null;
         try {
           data = text ? JSON.parse(text) : null;
@@ -356,7 +410,7 @@ export default function Page() {
         }
 
         if (!res.ok || !data?.ok || !data?.imageUrl) {
-          throw new Error(`Render ${v.key} failed: ${data?.error || text || res.status}`);
+          throw new Error(`Render ${v.key} failed: ${data?.error || 'Unknown error'}`);
         }
 
         return { key: v.key, url: data.imageUrl };
@@ -441,7 +495,7 @@ export default function Page() {
       }}>
         <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 10, color: "#111827" }}>Terrarium Idea Builder</div>
 
-        <div style={{ display: "grid", gap: 8, flex: 1, overflowY: "auto", paddingRight: "4px" }}>
+        <div style={{ display: "grid", gap: 8, flex: 1, overflow: "hidden", paddingRight: "4px" }}>
           <Select label="Hình dáng hồ" value={shape} onChange={setShape} options={OPTIONS.shape} />
 
           <Select label="Vật liệu khung" value={frame} onChange={setFrame} options={OPTIONS.frame} />
