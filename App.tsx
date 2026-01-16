@@ -177,17 +177,25 @@ export default function Page() {
         const res = await fetch("/api/render-terrarium", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt, aspect }),
+          body: JSON.stringify({ prompt }),
         });
 
-        const data = await res.json();
-        if (res.ok && data.imageUrl) {
-          setImages((p) => ({ ...p, [v.key]: data.imageUrl }));
-          console.log(`Successfully rendered ${v.key} using model: ${data.model || 'unknown'}`);
-        } else {
+        // Luôn đọc text trước để tránh "Unexpected end of JSON input"
+        const text = await res.text();
+        let data: any = null;
+        
+        try {
+          data = text ? JSON.parse(text) : null;
+        } catch (parseError) {
+          data = { ok: false, error: "Non-JSON response", raw: text.substring(0, 200) };
+        }
+
+        if (!res.ok || !data?.ok) {
           console.error(`Render error for ${v.key}:`, data);
-          // Show error in the image slot
-          setImages((p) => ({ ...p, [v.key]: `ERROR: ${data.error || 'Unknown error'}` }));
+          setImages((p) => ({ ...p, [v.key]: `ERROR: ${data?.error || 'Unknown error'}` }));
+        } else {
+          setImages((p) => ({ ...p, [v.key]: data.imageUrl }));
+          console.log(`Successfully rendered ${v.key}`);
         }
       } catch (error: any) {
         console.error(`Render error for ${v.key}:`, error);
