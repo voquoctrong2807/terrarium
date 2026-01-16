@@ -148,13 +148,13 @@ function PreviewCard({ title, src, loading, onOpen }: { title: string; src: stri
         {title}
       </div>
 
-      {/* KHUNG DỌC 3:4 với object-contain */}
+      {/* KHUNG DỌC 3:4 với object-contain - PORTRAIT THẬT SỰ */}
       <div
         style={{
           width: "100%",
           flex: 1,
           minHeight: 0,
-          background: "#f1f5f9",
+          background: "#0b1220",
           position: "relative",
           overflow: "hidden",
           cursor: src && !src.startsWith('ERROR:') ? "zoom-in" : "default",
@@ -170,7 +170,7 @@ function PreviewCard({ title, src, loading, onOpen }: { title: string; src: stri
           width: "100%", 
           aspectRatio: "3 / 4", 
           position: "relative",
-          background: "#f1f5f9",
+          background: "#0b1220",
         }}>
           {src ? (
             src.startsWith('ERROR:') ? (
@@ -226,28 +226,64 @@ function ImageModal({ src, onClose }: { src: string | null; onClose: () => void 
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.65)",
+        background: "rgba(0,0,0,0.85)",
         display: "grid",
         placeItems: "center",
-        zIndex: 9999,
+        zIndex: 99999,
         padding: 20,
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxWidth: "min(900px, 95vw)",
-          maxHeight: "90vh",
-          background: "white",
+          maxWidth: "95vw",
+          maxHeight: "95vh",
+          background: "#000",
           borderRadius: 16,
           overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        <img src={src} alt="full" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-        <div style={{ padding: 10, display: "flex", justifyContent: "flex-end" }}>
+        <div style={{ 
+          flex: 1, 
+          display: "flex", 
+          alignItems: "center", 
+          justifyContent: "center",
+          minHeight: 0,
+          padding: 20,
+        }}>
+          <img 
+            src={src} 
+            alt="full" 
+            style={{ 
+              width: "100%", 
+              height: "100%", 
+              objectFit: "contain",
+              maxWidth: "100%",
+              maxHeight: "100%",
+            }} 
+          />
+        </div>
+        <div style={{ 
+          padding: "12px 16px", 
+          display: "flex", 
+          justifyContent: "flex-end",
+          background: "#000",
+          borderTop: "1px solid rgba(255,255,255,0.1)",
+        }}>
           <button
             onClick={onClose}
-            style={{ padding: "10px 12px", borderRadius: 12, border: "1px solid #e5e7eb", background: "white", fontWeight: 700, cursor: "pointer" }}
+            style={{ 
+              padding: "10px 20px", 
+              borderRadius: 8, 
+              border: "1px solid rgba(255,255,255,0.3)", 
+              background: "rgba(255,255,255,0.1)", 
+              color: "#fff",
+              fontWeight: 700, 
+              cursor: "pointer",
+              fontSize: 14,
+            }}
           >
             Đóng
           </button>
@@ -291,7 +327,7 @@ export default function Page() {
       `Phong cách ảnh: photorealistic, ultra realistic, high detail, texture vật liệu thật, ánh sáng mềm, DOF nông, bố cục gọn gàng, không hoạt hình, không minh họa.`,
       `Cùng một hồ, cùng bố cục, chỉ thay góc chụp.`,
       `Chụp toàn cảnh (wide full view), full tank shot, include entire glass terrarium from top frame to base, centered composition.`,
-      `Ảnh dọc portrait 3:4. Full tank shot: thấy trọn hồ terrarium từ viền trên đến chân đế. Bố cục nằm giữa khung. KHÔNG ảnh ngang. KHÔNG cận cảnh. KHÔNG crop. Không chụp cận cảnh, không macro, không close-up, không chỉ chụp phần ngọn, không crop.`,
+      `BẮT BUỘC ẢNH DỌC portrait 3:4. Full tank shot: thấy trọn hồ terrarium từ viền trên đến chân đế. Căn giữa. Không cận cảnh. Không crop. Không ảnh ngang.`,
     ].filter(Boolean).join(" ");
   }, [shape, frame, theme, hardscape, plants, density, lighting, mood, aspect, gundamMain]);
 
@@ -346,7 +382,7 @@ export default function Page() {
     try {
       // STEP 1: Render HERO (front) trước
       const heroView = VIEWS.find(v => v.key === "front")!;
-      const heroPrompt = `${basePrompt} ${heroView.suffix} Ảnh dọc portrait tỉ lệ 3:4. Full tank shot: thấy TRỌN hồ terrarium từ viền trên đến chân đế. KHÔNG ảnh ngang. KHÔNG close-up. KHÔNG crop. REQUIRED: portrait orientation 3:4. include entire terrarium. no close-up. no cropping.`;
+      const heroPrompt = `${basePrompt} ${heroView.suffix} portrait 3:4, full tank shot, include entire terrarium, no cropping, no close-up. REQUIRED: portrait orientation 3:4. include entire terrarium. no close-up. no cropping.`;
 
       const heroRes = await fetch("/api/render-terrarium", {
         method: "POST",
@@ -383,7 +419,7 @@ export default function Page() {
       // STEP 2: Render 3 ảnh còn lại SONG SONG với reference image
       const refViews = VIEWS.filter(v => !v.isHero);
       const refJobs = refViews.map(async (v) => {
-        const refPrompt = `${basePrompt} ${v.suffix} GIỮ NGUYÊN 100% bố cục, cây, lũa, đá như ảnh reference. Chỉ thay góc chụp/camera. Không thêm/bớt chi tiết. Ảnh dọc portrait tỉ lệ 3:4. Full tank shot: thấy TRỌN hồ terrarium từ viền trên đến chân đế. KHÔNG ảnh ngang. KHÔNG close-up. KHÔNG crop. REQUIRED: portrait orientation 3:4. include entire terrarium. no close-up. no cropping.`;
+        const refPrompt = `${basePrompt} ${v.suffix} GIỮ NGUYÊN 100% bố cục, cây, lũa, đá như ảnh reference. Chỉ thay góc chụp/camera. Không thêm/bớt chi tiết. portrait 3:4, full tank shot, include entire terrarium, no cropping, no close-up. REQUIRED: portrait orientation 3:4. include entire terrarium. no close-up. no cropping.`;
 
         const res = await fetch("/api/render-terrarium", {
           method: "POST",
