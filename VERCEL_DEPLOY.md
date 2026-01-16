@@ -143,7 +143,7 @@ Thêm biến môi trường:
 1. Click **"Environment Variables"**
 2. Thêm:
    - **Name**: `GOOGLE_AI_STUDIO_API_KEY`
-   - **Value**: `AIza.......................` (hoặc API key của bạn)
+   - **Value**: `AIza...............` (hoặc API key của bạn)
    - **Environment**: Chọn tất cả (Production, Preview, Development)
 
 3. Click **"Save"**
