@@ -1,0 +1,7 @@
+{
+  "name": "Terrarium Design Pro AI",
+  "description": "An expert AI application for designing high-end terrariums and vivariums. Generates detailed concepts, hardscape layouts, and high-quality visual prompts and images.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
