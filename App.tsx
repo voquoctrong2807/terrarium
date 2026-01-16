@@ -241,7 +241,7 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ title, src, loading, progress
         {title}
       </div>
 
-      {/* KHUNG DỌC 3:4 với object-contain - PORTRAIT THẬT SỰ - KHÔNG ZOOM */}
+      {/* KHUNG DỌC 3:4 với object-contain - RESPONSIVE - KHÔNG ZOOM/CROP */}
       <div
         style={{
           width: "100%",
@@ -249,26 +249,31 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ title, src, loading, progress
           minHeight: 0,
           background: "#0b1220",
           position: "relative",
-          overflow: "hidden",
+          overflow: "visible", // Đổi từ hidden sang visible để không cắt ảnh
           cursor: src && !src.startsWith('ERROR:') ? "zoom-in" : "default",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "8px",
+          padding: "4px", // Giảm padding để có thêm không gian
         }}
         onClick={() => src && !src.startsWith('ERROR:') && onOpen(src)}
         title={src && !src.startsWith('ERROR:') ? "Bấm để xem full" : ""}
       >
-        {/* Container cố định 3:4, không bị ảnh hưởng bởi flex */}
+        {/* Container responsive: fit trong viewport, đảm bảo 3:4, không bị cắt */}
         <div style={{ 
           width: "100%", 
           maxWidth: "100%",
+          // Tính toán height dựa trên width để đảm bảo 3:4, nhưng không vượt quá container
           aspectRatio: "3 / 4", 
           position: "relative",
           background: "#0b1220",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          boxSizing: "border-box",
+          // Đảm bảo container không vượt quá kích thước có sẵn
+          maxHeight: "100%",
+          minHeight: 0,
         }}>
           {src ? (
             src.startsWith('ERROR:') ? (
@@ -280,13 +285,14 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ title, src, loading, progress
                 src={src}
                 alt={title}
                 style={{ 
-                  maxWidth: "100%",
-                  maxHeight: "100%",
-                  width: "auto",
-                  height: "auto",
-                  objectFit: "contain",
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain", // Luôn contain để không bị crop
                   objectPosition: "center",
                   display: "block",
+                  // Đảm bảo ảnh không vượt quá container
+                  maxWidth: "100%",
+                  maxHeight: "100%",
                 }}
               />
             )
@@ -365,12 +371,14 @@ function ImageModal({ src, onClose }: { src: string | null; onClose: () => void 
         onClick={(e) => e.stopPropagation()}
         style={{
           width: "min(92vw, 720px)",
+          maxHeight: "min(92vh, calc(92vw * 4 / 3))", // Đảm bảo không vượt quá viewport
           aspectRatio: "3 / 4",
           background: "#000",
           borderRadius: 16,
-          overflow: "hidden",
+          overflow: "visible", // Đổi từ hidden sang visible
           display: "flex",
           flexDirection: "column",
+          boxSizing: "border-box",
         }}
       >
         <div style={{ 
@@ -379,20 +387,21 @@ function ImageModal({ src, onClose }: { src: string | null; onClose: () => void 
           alignItems: "center", 
           justifyContent: "center",
           minHeight: 0,
-          padding: 20,
+          padding: "12px", // Giảm padding
           position: "relative",
+          overflow: "visible",
         }}>
           <img 
             src={src} 
             alt="full" 
             style={{ 
-              maxWidth: "100%",
-              maxHeight: "100%",
-              width: "auto",
-              height: "auto",
-              objectFit: "contain",
+              width: "100%",
+              height: "100%",
+              objectFit: "contain", // Luôn contain để không bị crop
               objectPosition: "center",
               display: "block",
+              maxWidth: "100%",
+              maxHeight: "100%",
             }} 
           />
         </div>
@@ -734,10 +743,18 @@ export default function Page() {
           overflow: hidden;
           margin: 0;
           padding: 0;
+          /* Xử lý viewport scaling trên laptop */
+          -webkit-text-size-adjust: 100%;
+          text-size-adjust: 100%;
         }
         body {
           color: #111827;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        }
+        /* Đảm bảo ảnh luôn contain đầy đủ */
+        img {
+          image-rendering: -webkit-optimize-contrast;
+          image-rendering: crisp-edges;
         }
         input[type="range"] {
           -webkit-appearance: none;
@@ -965,7 +982,15 @@ export default function Page() {
         </div>
       </aside>
 
-      <main style={{ padding: 12, overflow: "hidden", display: "flex", flexDirection: "column", height: "100vh" }}>
+      <main style={{ 
+        padding: 12, 
+        overflow: "visible", // Đổi từ hidden để không cắt ảnh
+        display: "flex", 
+        flexDirection: "column", 
+        height: "100vh",
+        maxHeight: "100vh", // Đảm bảo không vượt quá viewport
+        boxSizing: "border-box",
+      }}>
         <ImageModal src={activeImg} onClose={() => setActiveImg(null)} />
         
         <div style={{ 
@@ -975,6 +1000,9 @@ export default function Page() {
           gap: 12, 
           flex: 1,
           minHeight: 0,
+          maxHeight: "100%",
+          overflow: "visible", // Không cắt ảnh
+          boxSizing: "border-box",
         }}>
           {VIEWS.map((v) => (
             <PreviewCard
