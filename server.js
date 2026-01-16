@@ -26,48 +26,19 @@ app.post('/api/render-terrarium', async (req, res) => {
 
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    // Try multiple possible model names
-    const possibleModels = [
-      "gemini-3-pro-image-preview",
-      "gemini-2.0-flash-exp:generatecontent",
-      "imagen-3.0-generate-001",
-      "nano-banana-pro",
-      "gemini-1.5-pro",
-    ];
-
-    let result = null;
-    let lastError = null;
-    let usedModel = null;
-
-    for (const modelName of possibleModels) {
-      try {
-        console.log(`Trying model: ${modelName}`);
-        const model = genAI.getGenerativeModel({ model: modelName });
-        
-        result = await model.generateContent([
-          {
-            text: `Tạo 1 ảnh theo mô tả sau. Tỉ lệ ảnh ${aspect}. ${prompt}`,
-          },
-        ]);
-        
-        usedModel = modelName;
-        console.log(`Success with model: ${modelName}`);
-        break;
-      } catch (err) {
-        console.log(`Model ${modelName} failed:`, err.message);
-        lastError = err;
-        continue;
-      }
-    }
-
-    if (!result) {
-      console.error('All models failed. Last error:', lastError);
-      return res.status(500).json({
-        error: "Failed to generate image with any available model",
-        detail: lastError?.message || String(lastError),
-        triedModels: possibleModels
-      });
-    }
+    // Chỉ sử dụng model nano-banana-pro
+    const modelName = "nano-banana-pro";
+    console.log(`Using model: ${modelName}`);
+    
+    const model = genAI.getGenerativeModel({ model: modelName });
+    
+    const result = await model.generateContent([
+      {
+        text: `Tạo 1 ảnh theo mô tả sau. Tỉ lệ ảnh ${aspect}. ${prompt}`,
+      },
+    ]);
+    
+    console.log(`Success with model: ${modelName}`);
 
     console.log('Response structure:', JSON.stringify(result.response, null, 2).substring(0, 500));
 
@@ -107,12 +78,12 @@ app.post('/api/render-terrarium', async (req, res) => {
       return res.status(501).json({
         error: "Image output mapping needed for your SDK response format.",
         debug: JSON.stringify(result.response, null, 2).substring(0, 2000),
-        usedModel: usedModel
+        usedModel: modelName
       });
     }
 
     console.log('Successfully generated image');
-    return res.json({ imageUrl, model: usedModel });
+    return res.json({ imageUrl, model: modelName });
   } catch (e) {
     console.error('Render error:', e);
     console.error('Error stack:', e.stack);
