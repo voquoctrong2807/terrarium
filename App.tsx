@@ -58,9 +58,9 @@ const OPTIONS = {
 
 const VIEWS = [
   { key: "front", title: "Chính diện", suffix: "Chụp chính diện, camera đặt ngang tầm mắt, vuông góc mặt kính trước. Full tank shot.", isHero: true },
-  { key: "left", title: "Trái", suffix: "Chụp từ BÊN TRÁI 45 độ, thấy MẶT KÍNH BÊN TRÁI và chiều sâu, parallax rõ, left side panel visible, left frame edge visible. Full tank shot. Không được giống chính diện.", isHero: false },
-  { key: "low", title: "Dưới", suffix: "Chụp GÓC THẤP từ dưới nhìn lên, thấy viền đáy và trục dọc, perspective mạnh, base frame visible, upward perspective. Full tank shot.", isHero: false },
-  { key: "top", title: "Trên", suffix: "Chụp TOP-DOWN từ trên xuống, thấy layout mặt bằng, thấy khung viền trên, top frame visible, overhead view. Full tank shot. Không được giống chính diện.", isHero: false },
+  { key: "left", title: "Trái", suffix: "Camera 45 degrees from left, left glass panel visible, parallax effect, perspective shift, not front view. Full tank shot.", isHero: false },
+  { key: "low", title: "Dưới", suffix: "Low angle upward perspective, base frame visible, strong perspective distortion, not front view. Full tank shot.", isHero: false },
+  { key: "top", title: "Trên", suffix: "Top-down overhead view, top frame visible, bird's eye view, not front view. Full tank shot.", isHero: false },
 ];
 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: typeof OPTIONS.shape }) {
@@ -135,24 +135,22 @@ function PreviewCard({ title, src, loading, onOpen }: { title: string; src: stri
   return (
     <div style={{ 
       border: "1px solid #e5e7eb", 
-      borderRadius: 12, 
+      borderRadius: 16, 
       background: "white", 
       overflow: "hidden", 
       boxShadow: "0 4px 12px rgba(17,24,39,0.05)", 
       height: "100%", 
       display: "flex", 
       flexDirection: "column",
-      maxWidth: "calc((100vh - 24px - 12px) / 2 * 0.75)",
-      margin: "0 auto",
     }}>
       <div style={{ 
-        padding: "6px 10px", 
+        padding: "8px 12px", 
         fontSize: 12, 
         fontWeight: 700, 
         color: "#111827",
         background: "#fafafa",
         borderBottom: "1px solid #eef2f7",
-        height: "28px",
+        height: "32px",
         display: "flex",
         alignItems: "center",
       }}>
@@ -180,6 +178,7 @@ function PreviewCard({ title, src, loading, onOpen }: { title: string; src: stri
         <div style={{ 
           width: "100%", 
           aspectRatio: "3 / 4", 
+          height: "auto",
           position: "relative",
           background: "#0b1220",
         }}>
@@ -195,7 +194,8 @@ function PreviewCard({ title, src, loading, onOpen }: { title: string; src: stri
                 style={{ 
                   width: "100%", 
                   height: "100%", 
-                  objectFit: "contain", 
+                  objectFit: "contain",
+                  objectPosition: "center",
                   display: "block" 
                 }}
               />
@@ -247,8 +247,8 @@ function ImageModal({ src, onClose }: { src: string | null; onClose: () => void 
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxWidth: "95vw",
-          maxHeight: "95vh",
+          width: "min(92vw, 720px)",
+          aspectRatio: "3 / 4",
           background: "#000",
           borderRadius: 16,
           overflow: "hidden",
@@ -271,8 +271,7 @@ function ImageModal({ src, onClose }: { src: string | null; onClose: () => void 
               width: "100%", 
               height: "100%", 
               objectFit: "contain",
-              maxWidth: "100%",
-              maxHeight: "100%",
+              objectPosition: "center",
             }} 
           />
         </div>
@@ -431,13 +430,13 @@ export default function Page() {
       const refViews = VIEWS.filter(v => !v.isHero);
       const refJobs = refViews.map(async (v) => {
         const angleMap: { [key: string]: string } = {
-          left: "LEFT (45 degrees from left side)",
-          low: "LOW (from below looking up)",
-          top: "TOP (overhead top-down view)"
+          left: "LEFT (camera 45 degrees from left, left glass panel visible)",
+          low: "LOW (low angle upward perspective, base frame visible)",
+          top: "TOP (top-down overhead, top frame visible)"
         };
         const angleName = angleMap[v.key] || v.key.toUpperCase();
         
-        const refPrompt = `Use the provided reference image as the exact same terrarium scene. DO NOT change plants/hardscape. ONLY change camera angle to: ${angleName}. NOT front view. ${v.suffix} GIỮ NGUYÊN 100% bố cục, cây, lũa, đá như ảnh reference. Chỉ thay vị trí camera theo góc được chỉ định. Bắt buộc thay đổi perspective. Nếu không thay đổi góc thì coi như sai. portrait 3:4, full tank shot, include entire terrarium, no cropping, no close-up. REQUIRED: portrait orientation 3:4. include entire terrarium. no close-up. no cropping.`;
+        const refPrompt = `Use reference image as exact scene. DO NOT change plants/hardscape. ONLY change camera angle to: ${angleName}. DO NOT return front view. ${v.suffix} GIỮ NGUYÊN 100% bố cục, cây, lũa, đá như ảnh reference. Chỉ thay vị trí camera theo góc được chỉ định. Bắt buộc thay đổi perspective và parallax. Nếu không thay đổi góc thì coi như sai. portrait 3:4, full tank shot, include entire terrarium, no cropping, no close-up. REQUIRED: portrait orientation 3:4. include entire terrarium. no close-up. no cropping.`;
 
         const res = await fetch("/api/render-terrarium", {
           method: "POST",
@@ -535,7 +534,7 @@ export default function Page() {
           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
       `}</style>
-      <div style={{ height: "100vh", display: "grid", gridTemplateColumns: "clamp(440px, 32vw, 560px) 1fr", background: "#f6f7fb", overflow: "hidden" }}>
+      <div style={{ height: "100vh", display: "grid", gridTemplateColumns: "clamp(380px, 30vw, 520px) 1fr", background: "#f6f7fb", overflow: "hidden" }}>
       <aside style={{ 
         height: "100vh",
         borderRight: "1px solid #e5e7eb", 
@@ -566,7 +565,7 @@ export default function Page() {
           paddingBottom: "12px",
           paddingRight: "10px",
         }}>
-          <div style={{ display: "grid", gap: 8 }}>
+          <div style={{ display: "grid", gap: 10 }}>
             <Select label="Hình dáng hồ" value={shape} onChange={setShape} options={OPTIONS.shape} />
 
             <Select label="Vật liệu khung" value={frame} onChange={setFrame} options={OPTIONS.frame} />
