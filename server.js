@@ -13,8 +13,8 @@ app.use(express.json());
 
 app.post('/api/render-terrarium', async (req, res) => {
   try {
-    const { prompt } = req.body;
-    console.log('Received request:', { prompt: prompt?.substring(0, 100) + '...' });
+    const { prompt, aspect = "3:4" } = req.body;
+    console.log('Received request:', { prompt: prompt?.substring(0, 100) + '...', aspect });
 
     const apiKey = process.env.GOOGLE_AI_STUDIO_API_KEY;
     if (!apiKey) {
@@ -28,9 +28,12 @@ app.post('/api/render-terrarium', async (req, res) => {
     const ai = new GoogleGenAI({ apiKey });
 
     // Nano Banana Pro = gemini-3-pro-image-preview
+    // Thêm aspect vào prompt để ép tỉ lệ ảnh
+    const fullPrompt = `${prompt}\nTỉ lệ khung hình bắt buộc: ${aspect}. Ảnh dọc đúng tỉ lệ ${aspect}, không ảnh ngang.`;
+    
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-image-preview",
-      contents: prompt,
+      contents: fullPrompt,
     });
 
     const parts = response?.candidates?.[0]?.content?.parts ?? [];

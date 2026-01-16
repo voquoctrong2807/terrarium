@@ -129,6 +129,111 @@ function CheckboxList({ label, values, onToggle, options }: { label: string; val
   );
 }
 
+function PreviewCard({ title, src, loading, onOpen }: { title: string; src: string; loading: boolean; onOpen: (src: string) => void }) {
+  return (
+    <div style={{ border: "1px solid #e5e7eb", borderRadius: 16, background: "white", overflow: "hidden", boxShadow: "0 6px 18px rgba(17,24,39,0.06)" }}>
+      <div style={{ 
+        padding: "10px 12px", 
+        fontSize: 14, 
+        fontWeight: 700, 
+        color: "#111827",
+        background: "#fafafa",
+        borderBottom: "1px solid #eef2f7",
+      }}>
+        {title}
+      </div>
+
+      {/* KHUNG 3:4 */}
+      <div
+        style={{
+          width: "100%",
+          aspectRatio: "3 / 4",
+          background: "#f1f5f9",
+          position: "relative",
+          overflow: "hidden",
+          cursor: src && !src.startsWith('ERROR:') ? "zoom-in" : "default",
+        }}
+        onClick={() => src && !src.startsWith('ERROR:') && onOpen(src)}
+        title={src && !src.startsWith('ERROR:') ? "Bấm để xem full" : ""}
+      >
+        {src ? (
+          src.startsWith('ERROR:') ? (
+            <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#dc2626", fontSize: 12, padding: 12, textAlign: "center" }}>
+              {src}
+            </div>
+          ) : (
+            <img
+              src={src}
+              alt={title}
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            />
+          )
+        ) : (
+          <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#64748b" }}>
+            Chưa có ảnh
+          </div>
+        )}
+
+        {loading && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(255,255,255,0.7)",
+              display: "grid",
+              placeItems: "center",
+              fontWeight: 800,
+              color: "#111827",
+            }}
+          >
+            Rendering…
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ImageModal({ src, onClose }: { src: string | null; onClose: () => void }) {
+  if (!src) return null;
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.65)",
+        display: "grid",
+        placeItems: "center",
+        zIndex: 9999,
+        padding: 20,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxWidth: "min(900px, 95vw)",
+          maxHeight: "90vh",
+          background: "white",
+          borderRadius: 16,
+          overflow: "hidden",
+        }}
+      >
+        <img src={src} alt="full" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        <div style={{ padding: 10, display: "flex", justifyContent: "flex-end" }}>
+          <button
+            onClick={onClose}
+            style={{ padding: "10px 12px", borderRadius: 12, border: "1px solid #e5e7eb", background: "white", fontWeight: 700, cursor: "pointer" }}
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Page() {
   const [shape, setShape] = useState(OPTIONS.shape[0].value);
   const [frame, setFrame] = useState(OPTIONS.frame[0].value);
@@ -143,6 +248,7 @@ export default function Page() {
 
   const [images, setImages] = useState({ front: "", left: "", low: "", top: "" });
   const [loading, setLoading] = useState({ front: false, left: false, low: false, top: false });
+  const [activeImg, setActiveImg] = useState<string | null>(null);
 
   const labelOf = (group: typeof OPTIONS.shape, v: string) => group.find((x) => x.value === v)?.label ?? v;
 
@@ -160,6 +266,7 @@ export default function Page() {
       gundamLine,
       `Nền hồ gồm đất, sỏi, đá và rêu tự nhiên. Ánh sáng ${labelOf(OPTIONS.lighting, lighting)}, mood ${labelOf(OPTIONS.mood, mood)}.`,
       `Phong cách ảnh: photorealistic, ultra realistic, high detail, texture vật liệu thật, ánh sáng mềm, DOF nông, bố cục gọn gàng, không hoạt hình, không minh họa.`,
+      `Cùng một hồ, cùng bố cục, chỉ thay góc chụp.`,
     ].filter(Boolean).join(" ");
   }, [shape, frame, theme, hardscape, plants, density, lighting, mood, aspect, gundamMain]);
 
@@ -168,42 +275,48 @@ export default function Page() {
   };
 
   async function render4() {
-    for (const v of VIEWS) {
-      setLoading((p) => ({ ...p, [v.key]: true }));
+    // Bật loading cùng lúc
+    setLoading({ front: true, left: true, low: true, top: true });
 
-      const prompt = `${basePrompt} ${v.suffix} Tỉ lệ ảnh ${aspect}.`;
+    const jobs = VIEWS.map(async (v) => {
+      const prompt = `${basePrompt} ${v.suffix} Tỉ lệ ảnh 3:4. Ảnh dọc 3:4.`;
 
+      const res = await fetch("/api/render-terrarium", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, aspect: "3:4" }),
+      });
+
+      const text = await res.text();
+      let data: any = null;
       try {
-        const res = await fetch("/api/render-terrarium", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt }),
-        });
-
-        // Luôn đọc text trước để tránh "Unexpected end of JSON input"
-        const text = await res.text();
-        let data: any = null;
-        
-        try {
-          data = text ? JSON.parse(text) : null;
-        } catch (parseError) {
-          data = { ok: false, error: "Non-JSON response", raw: text.substring(0, 200) };
-        }
-
-        if (!res.ok || !data?.ok) {
-          console.error(`Render error for ${v.key}:`, data);
-          setImages((p) => ({ ...p, [v.key]: `ERROR: ${data?.error || 'Unknown error'}` }));
-        } else {
-          setImages((p) => ({ ...p, [v.key]: data.imageUrl }));
-          console.log(`Successfully rendered ${v.key}`);
-        }
-      } catch (error: any) {
-        console.error(`Render error for ${v.key}:`, error);
-        setImages((p) => ({ ...p, [v.key]: `ERROR: ${error.message || 'Network error'}` }));
-      } finally {
-        setLoading((p) => ({ ...p, [v.key]: false }));
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = null;
       }
-    }
+
+      if (!res.ok || !data?.ok || !data?.imageUrl) {
+        throw new Error(`Render ${v.key} failed: ${data?.error || text || res.status}`);
+      }
+
+      return { key: v.key, url: data.imageUrl };
+    });
+
+    const results = await Promise.allSettled(jobs);
+
+    const nextImages: any = {};
+    results.forEach((r) => {
+      if (r.status === "fulfilled") {
+        nextImages[r.value.key] = r.value.url;
+      } else {
+        console.error(r.reason);
+        const key = VIEWS.find(v => r.reason?.message?.includes(v.key))?.key || "unknown";
+        nextImages[key] = `ERROR: ${r.reason?.message || 'Unknown error'}`;
+      }
+    });
+
+    setImages((prev) => ({ ...prev, ...nextImages }));
+    setLoading({ front: false, left: false, low: false, top: false });
   }
 
   return (
@@ -352,47 +465,17 @@ export default function Page() {
       </aside>
 
       <main style={{ padding: 18, overflow: "auto" }}>
+        <ImageModal src={activeImg} onClose={() => setActiveImg(null)} />
+        
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           {VIEWS.map((v) => (
-            <div 
-              key={v.key} 
-              style={{ 
-                border: "1px solid #e5e7eb", 
-                borderRadius: 16, 
-                background: "#ffffff", 
-                overflow: "hidden",
-                boxShadow: "0 6px 18px rgba(17,24,39,0.06)",
-              }}
-            >
-              <div style={{ 
-                padding: "10px 12px", 
-                fontSize: 14, 
-                fontWeight: 700, 
-                color: "#111827",
-                background: "#fafafa",
-                borderBottom: "1px solid #eef2f7",
-              }}>
-                {v.title}
-              </div>
-              <div style={{ height: 260, background: "#f6f7fb", display: "grid", placeItems: "center", position: "relative" }}>
-                {images[v.key as keyof typeof images] ? (
-                  images[v.key as keyof typeof images].startsWith('ERROR:') ? (
-                    <div style={{ color: "#dc2626", fontSize: 12, padding: 12, textAlign: "center" }}>
-                      {images[v.key as keyof typeof images]}
-                    </div>
-                  ) : (
-                    <img src={images[v.key as keyof typeof images]} alt={v.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  )
-                ) : (
-                  <div style={{ color: "#6b7280", fontSize: 13 }}>Chưa có ảnh</div>
-                )}
-                {loading[v.key as keyof typeof loading] && (
-                  <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.65)", display: "grid", placeItems: "center", fontWeight: 800, color: "#111827" }}>
-                    Rendering…
-                  </div>
-                )}
-              </div>
-            </div>
+            <PreviewCard
+              key={v.key}
+              title={v.title}
+              src={images[v.key as keyof typeof images] || ""}
+              loading={!!loading[v.key as keyof typeof loading]}
+              onOpen={(src: string) => setActiveImg(src)}
+            />
           ))}
         </div>
 
