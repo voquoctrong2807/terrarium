@@ -274,6 +274,7 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ title, src, loading, progress
           // Đảm bảo container không vượt quá kích thước có sẵn
           maxHeight: "100%",
           minHeight: 0,
+          overflow: "hidden", // Ẩn phần ảnh vượt quá (nếu có) nhưng ảnh vẫn contain đầy đủ
         }}>
           {src ? (
             src.startsWith('ERROR:') ? (
@@ -285,14 +286,17 @@ const PreviewCard: React.FC<PreviewCardProps> = ({ title, src, loading, progress
                 src={src}
                 alt={title}
                 style={{ 
-                  width: "100%",
-                  height: "100%",
+                  // Không set width/height = 100% để tránh zoom
+                  // Dùng maxWidth/maxHeight để fit trong container
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  width: "auto",
+                  height: "auto",
                   objectFit: "contain", // Luôn contain để không bị crop
                   objectPosition: "center",
                   display: "block",
-                  // Đảm bảo ảnh không vượt quá container
-                  maxWidth: "100%",
-                  maxHeight: "100%",
+                  // Đảm bảo ảnh giữ nguyên tỉ lệ gốc
+                  imageRendering: "auto",
                 }}
               />
             )
@@ -395,13 +399,17 @@ function ImageModal({ src, onClose }: { src: string | null; onClose: () => void 
             src={src} 
             alt="full" 
             style={{ 
-              width: "100%",
-              height: "100%",
+              // Không set width/height = 100% để tránh zoom
+              // Dùng maxWidth/maxHeight để fit trong container
+              maxWidth: "100%",
+              maxHeight: "100%",
+              width: "auto",
+              height: "auto",
               objectFit: "contain", // Luôn contain để không bị crop
               objectPosition: "center",
               display: "block",
-              maxWidth: "100%",
-              maxHeight: "100%",
+              // Đảm bảo ảnh giữ nguyên tỉ lệ gốc
+              imageRendering: "auto",
             }} 
           />
         </div>
